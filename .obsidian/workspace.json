@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "README.md",
+                "file": "design/concepts/UserAuthentication/implementation.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "README"
+              "title": "implementation"
             }
           }
         ]
@@ -94,7 +94,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "README.md",
+                "file": "design/learning/recitation.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -104,7 +104,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks for README"
+              "title": "Backlinks for recitation"
             }
           },
           {
@@ -171,6 +171,43 @@
   },
   "active": "60ccb8b74e272dda",
   "lastOpenFiles": [
-    "README.md"
+    "design/concepts/MusicTagging/specification.md",
+    "design/concepts/MusicTagging/incomplete_spec.md",
+    "design/concepts/MusicTagging",
+    "design/concepts/TagSearch/incomplete_spec.md",
+    "design/concepts/TagSearch/specification.md",
+    "design/concepts/TagSearch",
+    "context/design/concepts/UserAuthentication/testing.md/20251011_133308.57c508cd.md",
+    "context/design/concepts/UserAuthentication/testing.md/steps/response.e33d48d1.md",
+    "context/design/concepts/UserAuthentication/testing.md/20251011_133255.a045c6a8.md",
+    "context/design/concepts/UserAuthentication/testing.md/steps/prompt.695229f3.md",
+    "context/design/concepts/UserAuthentication/testing.md/steps/file.442b9fd2.md",
+    "context/design/concepts/UserAuthentication/testing.md/steps/response.d7812d11.md",
+    "context/design/concepts/UserAuthentication/testing.md/steps/prompt.35b6e05f.md",
+    "context/design/concepts/UserAuthentication/testing.md/steps/file.b7fff86a.md",
+    "context/src/concepts/UserAuthentication/UserAuthenticationConcept.test.ts/20251011_133255.442b9fd2.md",
+    "context/src/concepts/UserAuthentication/UserAuthenticationConcept.ts/20251011_133255.b7fff86a.md",
+    "context/design/concepts/UserAuthentication/implementation.md/20251011_133222.62c82106.md",
+    "context/design/concepts/UserAuthentication/implementation.md/steps/response.d7812d11.md",
+    "context/design/concepts/UserAuthentication/implementation.md/20251011_133219.0b303711.md",
+    "context/design/concepts/UserAuthentication/implementation.md/steps/prompt.35b6e05f.md",
+    "context/design/concepts/UserAuthentication/implementation.md/steps/file.f4633848.md",
+    "context/design/concepts/UserAuthentication/testing.md/20251011_132736.c36f2328.md",
+    "context/design/concepts/UserAuthentication/testing.md/steps/response.da7f509f.md",
+    "context/design/concepts/UserAuthentication/testing.md/20251011_132726.aec7e1fb.md",
+    "context/design/concepts/UserAuthentication/testing.md/steps/prompt.9a518069.md",
+    "context/design/concepts/UserAuthentication/testing.md/steps/file.a8cfb502.md",
+    "context/design/concepts/UserAuthentication/testing.md/steps/response.4bf8f96c.md",
+    "context/design/concepts/UserAuthentication/testing.md/steps/prompt.f19f0e9f.md",
+    "context/src/concepts/UserAuthentication/UserAuthenticationConcept.ts",
+    "media/error1.png",
+    "media/Screenshot 2025-10-11 at 12.34.57 PM.png",
+    "context/src/concepts/UserAuthentication/UserAuthenticationConcept.test.ts",
+    "context/src/concepts/UserAuthentication",
+    "ctx",
+    "ctx.tmp-1edf8dfbcb0d8210",
+    "src/concepts/UserAuthentication/UserAuthenticationConcept.test.ts",
+    "src/concepts/UserAuthentication/UserAuthenticationConcept.ts",
+    "context/design/concepts/UserAuthentication/testing.md/steps"
   ]
 }
