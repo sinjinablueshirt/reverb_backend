@@ -1,18 +1,3 @@
-[@concept-design-overview](../../background/concept-design-overview.md)
-
-[@concept-specifications](../../background/concept-specifications.md)
-
-[@implementing-concepts](../../background/implementing-concepts.md)
-
-[@userauthentication-specification](specification.md)
-
-[@current-implementation](../../../src/concepts/MusicTagging/MusicTaggingConcept.ts)
-
-# prompt: Given the current implementation of MusicTagging, create an action for registerResource only. do not implement anything else
-
-# response:
-
-```typescript
 import { Collection, Db } from "npm:mongodb";
 import { Empty, ID } from "@utils/types.ts";
 import { freshID } from "@utils/database.ts";
@@ -75,11 +60,4 @@ export default class MusicTaggingConcept {
     // Return the identifier of the new Registry entry
     return { registry: newRegistryId };
   }
-
-  // Other actions would be implemented here following the same pattern
-  // async addTag({ registry, tag }: { registry: RegistryID; tag: string }): Promise<Empty | { error: string }> { /* ... */ return {}; }
-  // async removeTag({ registry, tag }: { registry: RegistryID; tag: string }): Promise<Empty | { error: string }> { /* ... */ return {}; }
-  // async deleteRegistry({ registry }: { registry: RegistryID }): Promise<Empty | { error: string }> { /* ... */ return {}; }
-  // async suggestTags({ registry, llm }: { registry: RegistryID; llm: GeminiLLM }): Promise<Empty | { error: string }> { /* ... */ return {}; }
 }
-```

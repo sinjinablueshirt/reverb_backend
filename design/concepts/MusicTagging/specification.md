@@ -12,7 +12,7 @@
         * a `tags` set of `String`
 
 * **actions**
-    *   `registerResources (resource: Resource, description: String): (registry: Registry)`
+    *   `registerResource (resource: Resource, description: String): (registry: Registry)`
         *   **requires** no `Registry` entry exists in the state for the given `resource`
         *   **effects** A new `Registry` entry is created in the concept's state with the given `resource`, `description`, and an empty set of `tags`. The identifier of the new `Registry` entry is returned.
 

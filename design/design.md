@@ -23,7 +23,7 @@ When I was making these changes, I wanted to try out having Context generate the
 
 I couldnʻt figure out what was wrong, so what I did was went back to the UserAuthentication testing.md file and asked it for help. I put in [this prompt](context/design/concepts/UserAuthentication/testing.md/steps/prompt.175523c2.md) and [the current, failing test file](context/design/concepts/UserAuthentication/testing.md/steps/file.d6057bde.md). The result was new test code which I ran and it ended up working without running into the same error as before!
 
-3.
+3. I came to the realization when I was working on my second concept (MusicTagging) that when I am prompting Context for tests, I shouldnʻt only pass in a code implementation of the concept since it doesnʻt really "know" the operational principle of the concept on its own. To follow this idea, I started passing in the concept specification file. This ended up bringing about a bunch of other problems. [In this snapshot](context/design/concepts/MusicTagging/testing.md/20251011_151131.ee58ae05.md), you can see how Context tried making its own register function. I had to change and test out the prompt over multiple iterations to end up with [this](). I believe that now Context knows that it should use the operational principle when designing tests.
 
 ## Other Notes
 

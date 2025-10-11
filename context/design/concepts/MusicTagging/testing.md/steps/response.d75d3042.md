@@ -1,14 +1,8 @@
-[@concept-design-overview](../../background/concept-design-overview.md)
-
-[@concept-specifications](../../background/concept-specifications.md)
-
-[@implementing-concepts](../../background/implementing-concepts.md)
-
-[@userauthentication-specification](specification.md)
-
-[@current-implementation](../../../src/concepts/MusicTagging/MusicTaggingConcept.ts)
-
-# prompt: Given the current implementation of MusicTagging, create an action for registerResource only. do not implement anything else
+---
+timestamp: 'Sat Oct 11 2025 15:31:37 GMT-0400 (Eastern Daylight Time)'
+parent: '[[../20251011_153137.a0c382d3.md]]'
+content_id: d75d3042da670f37e5a65f35c8628de7a32c0bb430f98d78c0e55280c6ac53f0
+---
 
 # response:
 
