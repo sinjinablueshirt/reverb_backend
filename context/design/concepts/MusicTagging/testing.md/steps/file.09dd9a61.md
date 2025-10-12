@@ -1,3 +1,12 @@
+---
+timestamp: 'Sat Oct 11 2025 22:52:03 GMT-0400 (Eastern Daylight Time)'
+parent: '[[../20251011_225203.c8aff00a.md]]'
+content_id: 09dd9a6105a2a082cc38e66b8e6617fc5497afad9afb13dfb3953a990c6505a7
+---
+
+# file: src/concepts/MusicTagging/MusicTaggingConcept.ts
+
+```typescript
 import { Collection, Db } from "npm:mongodb";
 import { Empty, ID } from "@utils/types.ts";
 import { freshID } from "@utils/database.ts";
@@ -303,3 +312,5 @@ export default class MusicTaggingConcept {
     return prompt;
   }
 }
+
+```

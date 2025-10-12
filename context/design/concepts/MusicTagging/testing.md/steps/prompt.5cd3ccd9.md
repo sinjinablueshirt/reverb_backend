@@ -1,11 +1,7 @@
-[@specification](specification.md)
-
-[@implementation](../../../src/concepts/MusicTagging/MusicTaggingConcept.ts)
-
-[@testing-concepts](../../background/testing-concepts.md)
-
-[@current-test-file](../../../src/concepts/MusicTagging/MusicTaggingConcept.test.ts)
-
-[@gemini-llm](../../../src/utils/gemini-llm.ts)
+---
+timestamp: 'Sat Oct 11 2025 23:06:52 GMT-0400 (Eastern Daylight Time)'
+parent: '[[../20251011_230652.02c76de5.md]]'
+content_id: 5cd3ccd99e38d3e7583eab12a05ce6e9c54246410a63b99dca52750f979ff9b8
+---
 
 # prompt: You are given an existing test suite for the MusicTagging concept. You should augment the tests so that some of them test the behavior of the suggestTags method. Be sure to make tests that follow the operational principle of the concept specification. Tests should use a sequence of action executions that corresponds to the operational principle, representing the common expected usage of the concept. These sequence is not required to use all the actions; operational principles often do not include a deletion action, for example. Test sequences of action executions that correspond to less common cases: probing interesting corners of the functionality, undoing actions with deletions and cancellations, repeating actions with the same arguments, etc. In some of these scenarios actions may be expected to throw errors. You should have one test sequence for the operational principle, and 3-5 additional interesting scenarios. Every action should be executed successfully in at least one of the scenarios. DO NOT create any more tests than the ones that already exist. Only add a few suggestTags calls in the tests. Use the gemini LLM util that is imported. DO NOT try to make your own LLM.

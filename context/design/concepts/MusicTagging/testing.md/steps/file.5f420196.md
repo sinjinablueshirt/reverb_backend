@@ -1,33 +1,23 @@
+---
+timestamp: 'Sat Oct 11 2025 23:02:28 GMT-0400 (Eastern Daylight Time)'
+parent: '[[../20251011_230228.6e5016fb.md]]'
+content_id: 5f420196e248899f29246a6b0811a8494346f1012f9278f94e679d12e3fad302
+---
+
+# file: src/concepts/MusicTagging/MusicTaggingConcept.test.ts
+
+```typescript
 import { assertEquals } from "jsr:@std/assert";
 import { testDb } from "@utils/database.ts";
 import MusicTaggingConcept from "./MusicTaggingConcept.ts";
 import { ID } from "@utils/types.ts";
-import { GeminiLLM } from "@utils/gemini-llm.ts";
+import { Config, GeminiLLM } from "@utils/gemini-llm.ts";
 
 // Helper function to get a fresh concept instance for each test
 async function setupConcept() {
   const [db, client] = await testDb();
   const concept = new MusicTaggingConcept(db);
   return { concept, db, client };
-}
-
-/**
- * Load configuration from .env
- */
-function loadLLM(): GeminiLLM {
-  try {
-    const apiKey = Deno.env.get("GEMINI_API_KEY");
-    if (!apiKey) {
-      throw new Error("GEMINI_API_KEY not found in environment variables.");
-    }
-    return new GeminiLLM(apiKey);
-  } catch (error) {
-    console.error(
-      "❌ Error loading .env. Please ensure GEMINI_API_KEY is set.",
-    );
-    console.error("Error details:", (error as Error).message);
-    Deno.exit(1);
-  }
 }
 
 Deno.test("MusicTaggingConcept", async (test) => {
@@ -87,31 +77,6 @@ Deno.test("MusicTaggingConcept", async (test) => {
       assertEquals(fetchedRegistry?.tags.includes(tag2), false);
       assertEquals(fetchedRegistry?.tags.includes(tag3), true);
 
-      // 4. add suggestTags call to verify it works in the principle test
-      const llm = loadLLM();
-      const suggestResult = await concept.suggestTags({
-        registry: registryId1,
-        llm: llm,
-      });
-      assertEquals(
-        "error" in suggestResult,
-        false,
-        "suggestTags should succeed",
-      );
-
-      // Fetch again because suggestTags should have added tags
-      fetchedRegistry = await concept.registries.findOne({
-        _id: registryId1,
-      });
-      if (fetchedRegistry === null) {
-        throw new Error("Registry should exist after suggestTags");
-      }
-      console.log("Tags after suggestTags:", fetchedRegistry?.tags);
-      assertEquals(
-        fetchedRegistry.tags.length > 2,
-        true,
-        "There should be at more than 2 tags after suggestTags",
-      );
       await client.close();
     },
   );
@@ -158,7 +123,7 @@ Deno.test("MusicTaggingConcept", async (test) => {
       const { concept, client } = await setupConcept();
 
       const resourceId = "res_addtag_errors" as ID;
-      const description = "league of legends";
+      const description = "A test resource for addTag errors.";
       const registerResult = await concept.registerResource({
         resource: resourceId,
         description: description,
@@ -168,19 +133,7 @@ Deno.test("MusicTaggingConcept", async (test) => {
       const tag = "genre_pop";
       const nonExistentRegistryId = "non_existent_registry" as ID;
 
-      // 1. use suggestTags to try add a tag first
-      const llm = loadLLM();
-      const suggestResult = await concept.suggestTags({
-        registry: registryId,
-        llm: llm,
-      });
-      assertEquals(
-        "error" in suggestResult,
-        true,
-        "suggestTags should not suggest any tags for this description",
-      );
-
-      // 2. Add tag successfully
+      // 1. Add tag successfully
       const addResult1 = await concept.addTag({ registry: registryId, tag });
       assertEquals(addResult1, {});
 
@@ -189,7 +142,7 @@ Deno.test("MusicTaggingConcept", async (test) => {
       });
       assertEquals(fetchedRegistry?.tags, [tag]);
 
-      // 3. Attempt to add the same tag again (should fail)
+      // 2. Attempt to add the same tag again (should fail)
       const addResult2 = await concept.addTag({ registry: registryId, tag });
       assertEquals(
         "error" in addResult2,
@@ -207,7 +160,7 @@ Deno.test("MusicTaggingConcept", async (test) => {
       });
       assertEquals(fetchedRegistry?.tags, [tag]);
 
-      // 4. Attempt to add a tag to a non-existent registry (should fail)
+      // 3. Attempt to add a tag to a non-existent registry (should fail)
       const addResult3 = await concept.addTag({
         registry: nonExistentRegistryId,
         tag: "new_tag",
@@ -389,3 +342,5 @@ Deno.test("MusicTaggingConcept", async (test) => {
     },
   );
 });
+
+```
