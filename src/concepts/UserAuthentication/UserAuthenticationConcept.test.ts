@@ -1,617 +1,471 @@
-import {
-  assert,
-  assertEquals,
-  assertNotEquals,
-  assertObjectMatch,
-} from "jsr:@std/assert";
-import { testDb } from "@utils/database.ts";
+import { assertEquals } from "jsr:@std/assert";
+import { testDb } from "@utils/database.ts"; // Utility to get a clean database for testing
 import UserAuthenticationConcept from "./UserAuthenticationConcept.ts";
-import { ID } from "@utils/types.ts";
+import { Empty, ID } from "@utils/types.ts";
 
-Deno.test("UserAuthenticationConcept - Register Action", async (t) => {
-  // Obtain database client once for this entire test suite/file.
-  // The 'testDb' function provides a fresh client and database instance.
+// Define consistent test data
+const TEST_USERNAME = "john.doe";
+const TEST_PASSWORD = "securePassword123";
+const TEST_NEW_PASSWORD = "strongNewPassword456";
+
+Deno.test("UserAuthenticationConcept", async (t) => {
   const [db, client] = await testDb();
-  const userAuth = new UserAuthenticationConcept(db);
+  const concept = new UserAuthenticationConcept(db);
 
-  try {
-    // All individual test steps run within this try block.
-    // This ensures that 'client.close()' in the finally block is always called,
-    // regardless of whether the steps pass or fail, preventing resource leaks.
+  await t.step(
+    "Scenario 1: Operational Principle - Register and Login",
+    async () => {
+      // 1. Register a new user
+      // Action: register(username: String, password: String): User
+      // Requires: a user with the same username doesn't already exist (satisfied, db is clean)
+      // Effects: creates and saves a new user. Returns the user
+      const registerResult = await concept.register({
+        username: TEST_USERNAME,
+        password: TEST_PASSWORD,
+      });
 
-    await t.step(
-      "should successfully register a new user and return their ID",
-      async () => {
-        const username = "alice";
-        const password = "password123";
+      assertEquals(
+        typeof registerResult,
+        "object",
+        "Register result should be an object",
+      );
+      assertEquals(
+        "user" in registerResult,
+        true,
+        "Register result should contain 'user'",
+      );
+      const userId = (registerResult as { user: ID }).user;
+      assertEquals(typeof userId, "string", "User ID should be a string"); // Assuming ID is a string type
 
-        // Perform the register action
-        const result = await userAuth.register({ username, password });
+      // 2. Log in with the correct credentials
+      // Action: login(username: String, password: String): User
+      // Requires: a user exists that has a username and password that matches (satisfied by registration)
+      // Effects: returns the user that has a username and password that matches
+      const loginResult = await concept.login({
+        username: TEST_USERNAME,
+        password: TEST_PASSWORD,
+      });
 
-        // Check if the registration was successful and returned a user ID
-        assert("user" in result, "Expected registration to return a user ID.");
-        const registeredUserId: ID = (result as { user: ID }).user;
-        assertNotEquals(registeredUserId, "", "User ID should not be empty.");
-
-        // Verify effects: a new user is created in the database
-        const userInDb = await userAuth["users"].findOne({
-          _id: registeredUserId,
-        });
-
-        assert(
-          userInDb !== null,
-          "Registered user should be found in the database.",
-        );
-        assertEquals(userInDb.username, username);
-        assertEquals(userInDb.password, password); // In a real app, verify hashed password
-        assertEquals(userInDb._id, registeredUserId);
-      },
-    );
-
-    await t.step(
-      "should prevent registration if username already exists (precondition)",
-      async () => {
-        const username = "bob";
-        const password = "securepassword";
-
-        // First successful registration
-        const firstResult = await userAuth.register({ username, password });
-        assert(
-          "user" in firstResult,
-          "First registration expected to succeed.",
-        );
-        const firstUserId: ID = (firstResult as { user: ID }).user;
-        assertNotEquals(firstUserId, "", "First user ID should not be empty.");
-
-        // Attempt to register again with the same username
-        const secondResult = await userAuth.register({
-          username,
-          password: "newpassword",
-        });
-
-        // Check if the registration failed with an error
-        assertObjectMatch(secondResult, {
-          error: "A user with this username already exists.",
-        });
-
-        // Verify effects: no new user was created with this username
-        const usersCount = await userAuth["users"].countDocuments({ username });
-        assertEquals(
-          usersCount,
-          1,
-          "Only the first user with this username should exist.",
-        );
-      },
-    );
-
-    await t.step(
-      "registration contributes to the principle by establishing a user in the system",
-      async () => {
-        const username = "charlie";
-        const password = "charliespassword";
-
-        const registerResult = await userAuth.register({ username, password });
-        assert(
-          "user" in registerResult,
-          "Registration for principle verification expected to succeed.",
-        );
-
-        const registeredUserId: ID = (registerResult as { user: ID }).user;
-        const userExists = await userAuth["users"].findOne({
-          _id: registeredUserId,
-        });
-
-        // Confirm that the user record now exists, ready for subsequent login attempts
-        assert(
-          userExists !== null,
-          "Registered user should exist in the database for principle check.",
-        );
-        assertEquals(userExists.username, username);
-      },
-    );
-  } finally {
-    // This 'finally' block ensures that the database client is closed
-    // after all sub-tests in this Deno.test block have completed,
-    // regardless of their outcome (pass/fail).
-    await client.close();
-  }
-});
-
-Deno.test("UserAuthenticationConcept - Login Action", async (t) => {
-  const [db, client] = await testDb();
-  const userAuth = new UserAuthenticationConcept(db);
-
-  // Setup: Register a user for login tests
-  const testUsername = "loginuser";
-  const testPassword = "loginpassword123";
-  let registeredUserId: ID;
-
-  // Use a Deno.test.beforeAll equivalent for setup if available,
-  // or simply perform setup once before the steps
-  const registerResult = await userAuth.register({
-    username: testUsername,
-    password: testPassword,
-  });
-  assert(
-    "user" in registerResult,
-    "Setup failed: User registration for login tests did not succeed.",
+      assertEquals(
+        typeof loginResult,
+        "object",
+        "Login result should be an object",
+      );
+      assertEquals(
+        "user" in loginResult,
+        true,
+        "Login result should contain 'user'",
+      );
+      assertEquals(
+        (loginResult as { user: ID }).user,
+        userId,
+        "Logged in user ID should match registered user ID",
+      );
+    },
   );
-  registeredUserId = (registerResult as { user: ID }).user;
 
-  try {
-    await t.step(
-      "should successfully log in with correct username and password and return user ID",
-      async () => {
-        // Perform the login action with correct credentials
-        const result = await userAuth.login({
-          username: testUsername,
-          password: testPassword,
-        });
+  await t.step(
+    "Scenario 2: Failed Registration and Login Attempts",
+    async () => {
+      const existingUsername = "existingUser";
+      const existingPassword = "existingPass";
 
-        // Check if the login was successful and returned the correct user ID
-        assert("user" in result, "Expected login to return a user ID.");
-        assertEquals((result as { user: ID }).user, registeredUserId);
-      },
-    );
+      // Pre-register a user for conflict testing
+      const initialRegisterResult = await concept.register({
+        username: existingUsername,
+        password: existingPassword,
+      });
+      assertEquals(
+        "user" in initialRegisterResult,
+        true,
+        "Initial registration should succeed",
+      );
 
-    await t.step(
-      "should fail to log in with an incorrect password (precondition)",
-      async () => {
-        // Attempt to login with correct username but incorrect password
-        const result = await userAuth.login({
-          username: testUsername,
-          password: "wrongpassword",
-        });
+      // 1. Attempt to register a user with an already existing username
+      // Action: register(username: String, password: String): User
+      // Requires: a user with the same username doesn't already exist (NOT satisfied)
+      // Effects: returns an error
+      const registerConflictResult = await concept.register({
+        username: existingUsername,
+        password: "someOtherPassword",
+      });
+      assertEquals(
+        "error" in registerConflictResult,
+        true,
+        "Register conflict should return an error",
+      );
+      assertEquals(
+        (registerConflictResult as { error: string }).error,
+        "A user with this username already exists.",
+        "Error message for existing username mismatch",
+      );
 
-        // Check if the login failed with an error
-        assertObjectMatch(result, { error: "Invalid username or password." });
-        assert(
-          !("user" in result),
-          "Login with wrong password should not return a user.",
-        );
-      },
-    );
+      // 2. Attempt to login with incorrect password for an existing user
+      // Action: login(username: String, password: String): User
+      // Requires: a user exists that has a username and password that matches (NOT satisfied)
+      // Effects: returns an error
+      const loginWrongPasswordResult = await concept.login({
+        username: existingUsername,
+        password: "wrong_password",
+      });
+      assertEquals(
+        "error" in loginWrongPasswordResult,
+        true,
+        "Login with wrong password should return an error",
+      );
+      assertEquals(
+        (loginWrongPasswordResult as { error: string }).error,
+        "Invalid username or password.",
+        "Error message for incorrect password",
+      );
 
-    await t.step(
-      "should fail to log in with an incorrect username (precondition)",
-      async () => {
-        // Attempt to login with incorrect username but correct password
-        const result = await userAuth.login({
-          username: "nonexistentuser",
-          password: testPassword,
-        });
-
-        // Check if the login failed with an error
-        assertObjectMatch(result, { error: "Invalid username or password." });
-        assert(
-          !("user" in result),
-          "Login with wrong username should not return a user.",
-        );
-      },
-    );
-
-    await t.step(
-      "should fail to log in with a non-existent user (precondition)",
-      async () => {
-        // Attempt to login with a username that was never registered
-        const result = await userAuth.login({
-          username: "completelynewuser",
-          password: "anypassword",
-        });
-
-        // Check if the login failed with an error
-        assertObjectMatch(result, { error: "Invalid username or password." });
-        assert(
-          !("user" in result),
-          "Login for non-existent user should not return a user.",
-        );
-      },
-    );
-
-    await t.step(
-      "login fulfills the principle by authenticating a previously registered user",
-      async () => {
-        const principleUsername = "principleUser";
-        const principlePassword = "principlePassword123";
-
-        // Step 1: Register (part of principle)
-        const registerRes = await userAuth.register({
-          username: principleUsername,
-          password: principlePassword,
-        });
-        assert("user" in registerRes, "Principle setup: registration failed.");
-        const principleUserId = (registerRes as { user: ID }).user;
-
-        // Step 2: Login (part of principle)
-        const loginRes = await userAuth.login({
-          username: principleUsername,
-          password: principlePassword,
-        });
-        assert("user" in loginRes, "Principle verification: login failed.");
-        assertEquals(
-          (loginRes as { user: ID }).user,
-          principleUserId,
-          "Principle verification: logged in user ID must match registered user ID.",
-        );
-      },
-    );
-  } finally {
-    await client.close();
-  }
-});
-
-Deno.test("UserAuthenticationConcept - DeleteUser Action", async (t) => {
-  const [db, client] = await testDb();
-  const userAuth = new UserAuthenticationConcept(db);
-
-  // Setup: Register a user that will be deleted in successful test cases
-  const deleteMeUsername = "deleteMe";
-  const deleteMePassword = "deleteMePass";
-  let deleteMeUserId: ID;
-  const registerResult = await userAuth.register({
-    username: deleteMeUsername,
-    password: deleteMePassword,
-  });
-  assert(
-    "user" in registerResult,
-    "Setup failed: User for deletion tests did not register successfully.",
+      // 3. Attempt to login with a non-existent username
+      // Action: login(username: String, password: String): User
+      // Requires: a user exists that has a username and password that matches (NOT satisfied)
+      // Effects: returns an error
+      const loginWrongUsernameResult = await concept.login({
+        username: "non_existent_user",
+        password: existingPassword,
+      });
+      assertEquals(
+        "error" in loginWrongUsernameResult,
+        true,
+        "Login with wrong username should return an error",
+      );
+      assertEquals(
+        (loginWrongUsernameResult as { error: string }).error,
+        "Invalid username or password.",
+        "Error message for non-existent username",
+      );
+    },
   );
-  deleteMeUserId = (registerResult as { user: ID }).user;
 
-  try {
-    await t.step(
-      "should successfully delete an existing user with correct credentials",
-      async () => {
-        // Perform the deleteUser action
-        const result = await userAuth.deleteUser({
-          username: deleteMeUsername,
-          password: deleteMePassword,
-        });
+  await t.step("Scenario 3: Password Change Functionality", async () => {
+    const userToChangePass = "chguser";
+    const initialPass = "initial123";
 
-        // Check if the deletion was successful (returns an empty object)
-        assertEquals(
-          result,
-          {},
-          "Expected successful deletion to return an empty object.",
-        );
+    // 1. Register a user
+    const registerResult = await concept.register({
+      username: userToChangePass,
+      password: initialPass,
+    });
+    assertEquals(
+      "user" in registerResult,
+      true,
+      "User registration for password change should succeed",
+    );
+    const userId = (registerResult as { user: ID }).user;
 
-        // Verify effects: the user should no longer exist in the database
-        const userInDb = await userAuth["users"].findOne({
-          _id: deleteMeUserId,
-        });
-        assertEquals(
-          userInDb,
-          null,
-          "Deleted user should no longer be found in the database.",
-        );
-
-        // Attempting to log in with deleted user credentials should fail
-        const loginAfterDelete = await userAuth.login({
-          username: deleteMeUsername,
-          password: deleteMePassword,
-        });
-        assertObjectMatch(loginAfterDelete, {
-          error: "Invalid username or password.",
-        });
-      },
+    // 2. Verify login with the initial password
+    const loginInitialPass = await concept.login({
+      username: userToChangePass,
+      password: initialPass,
+    });
+    assertEquals(
+      "user" in loginInitialPass,
+      true,
+      "Login with initial password should succeed",
+    );
+    assertEquals(
+      (loginInitialPass as { user: ID }).user,
+      userId,
+      "Logged in user ID should match",
     );
 
-    await t.step(
-      "should fail to delete a non-existent user (precondition)",
-      async () => {
-        const nonExistentUsername = "ghostuser";
-        const nonExistentPassword = "ghostpass";
-
-        // Perform the deleteUser action for a user that was never registered
-        const result = await userAuth.deleteUser({
-          username: nonExistentUsername,
-          password: nonExistentPassword,
-        });
-
-        // Check if the deletion failed with an error
-        assertObjectMatch(result, {
-          error: "Invalid username or password, or user does not exist.",
-        });
-        assert(
-          !("user" in result),
-          "Deletion of non-existent user should not return a user.",
-        );
-      },
+    // 3. Change the user's password using correct old password
+    // Action: changePassword(username: String, oldPassword: String, newPassword: String)
+    // Requires: a user exists that has a username and password that matches username and oldPassword (satisfied)
+    // Effects: changes the user's password to newPassword
+    const changePassResult = await concept.changePassword({
+      username: userToChangePass,
+      oldPassword: initialPass,
+      newPassword: TEST_NEW_PASSWORD,
+    });
+    assertEquals(
+      typeof changePassResult,
+      "object",
+      "Change password result should be an object",
+    );
+    assertEquals(
+      "error" in changePassResult,
+      false,
+      "Change password should not return an error",
+    );
+    assertEquals(
+      changePassResult,
+      {} as Empty,
+      "Successful change password should return an empty object",
     );
 
-    await t.step(
-      "should fail to delete an existing user with incorrect password (precondition)",
-      async () => {
-        // Setup: Register another user for this specific test
-        const userForWrongPass = "wrongPassUser";
-        const correctPassword = "correctPass";
-        await userAuth.register({
-          username: userForWrongPass,
-          password: correctPassword,
-        });
-
-        // Attempt to delete with correct username but incorrect password
-        const result = await userAuth.deleteUser({
-          username: userForWrongPass,
-          password: "wrongPassword",
-        });
-
-        // Check if the deletion failed with an error
-        assertObjectMatch(result, {
-          error: "Invalid username or password, or user does not exist.",
-        });
-
-        // Verify effects: the user should still exist in the database
-        const userInDb = await userAuth["users"].findOne({
-          username: userForWrongPass,
-        });
-        assert(
-          userInDb !== null,
-          "User should still exist after failed deletion attempt.",
-        );
-        assertEquals(userInDb.password, correctPassword); // Password should remain unchanged
-      },
+    // 4. Attempt to login with the old password (should now fail)
+    const loginOldPassAfterChange = await concept.login({
+      username: userToChangePass,
+      password: initialPass,
+    });
+    assertEquals(
+      "error" in loginOldPassAfterChange,
+      true,
+      "Login with old password after change should fail",
+    );
+    assertEquals(
+      (loginOldPassAfterChange as { error: string }).error,
+      "Invalid username or password.",
+      "Error message for old password login after change",
     );
 
-    await t.step(
-      "should fail to delete an existing user with incorrect username (precondition)",
-      async () => {
-        // Setup: Register another user for this specific test
-        const userForWrongUser = "wrongUserUser";
-        const userForWrongUserPass = "correctPassForWrongUser";
-        await userAuth.register({
-          username: userForWrongUser,
-          password: userForWrongUserPass,
-        });
-
-        // Attempt to delete with incorrect username but correct password
-        const result = await userAuth.deleteUser({
-          username: "incorrectUsername",
-          password: userForWrongUserPass,
-        });
-
-        // Check if the deletion failed with an error
-        assertObjectMatch(result, {
-          error: "Invalid username or password, or user does not exist.",
-        });
-
-        // Verify effects: the user should still exist in the database
-        const userInDb = await userAuth["users"].findOne({
-          username: userForWrongUser,
-        });
-        assert(
-          userInDb !== null,
-          "User should still exist after failed deletion attempt.",
-        );
-        assertEquals(userInDb.password, userForWrongUserPass); // Password should remain unchanged
-      },
+    // 5. Login with the new password (should succeed)
+    const loginNewPassAfterChange = await concept.login({
+      username: userToChangePass,
+      password: TEST_NEW_PASSWORD,
+    });
+    assertEquals(
+      "user" in loginNewPassAfterChange,
+      true,
+      "Login with new password after change should succeed",
     );
-  } finally {
-    await client.close();
-  }
-});
+    assertEquals(
+      (loginNewPassAfterChange as { user: ID }).user,
+      userId,
+      "Logged in user ID should match",
+    );
 
-Deno.test("UserAuthenticationConcept - ChangePassword Action", async (t) => {
-  const [db, client] = await testDb();
-  const userAuth = new UserAuthenticationConcept(db);
-
-  // Setup: Register a user for changePassword tests
-  const testUsername = "userToChangePass";
-  const initialPassword = "initialPassword123";
-  const newPassword = "newSecurePassword";
-  let registeredUserId: ID;
-
-  const registerResult = await userAuth.register({
-    username: testUsername,
-    password: initialPassword,
+    // 6. Attempt to change password with an incorrect old password
+    // Action: changePassword(username: String, oldPassword: String, newPassword: String)
+    // Requires: a user exists that has a username and password that matches username and oldPassword (NOT satisfied)
+    // Effects: returns an error
+    const changePassWrongOldResult = await concept.changePassword({
+      username: userToChangePass,
+      oldPassword: "incorrect_old_pass",
+      newPassword: "even_newer_pass",
+    });
+    assertEquals(
+      "error" in changePassWrongOldResult,
+      true,
+      "Change password with wrong old password should fail",
+    );
+    assertEquals(
+      (changePassWrongOldResult as { error: string }).error,
+      "Invalid username or old password.",
+      "Error message for changing password with wrong old password",
+    );
   });
-  assert(
-    "user" in registerResult,
-    "Setup failed: User for changePassword tests did not register successfully.",
+
+  await t.step("Scenario 4: User Deletion Functionality", async () => {
+    const userToDelete = "todelete";
+    const deletePass = "delpass";
+
+    // 1. Register a user for deletion
+    const registerResult = await concept.register({
+      username: userToDelete,
+      password: deletePass,
+    });
+    assertEquals(
+      "user" in registerResult,
+      true,
+      "User registration for deletion should succeed",
+    );
+    const userId = (registerResult as { user: ID }).user;
+
+    // 2. Confirm user exists by logging in
+    const loginBeforeDelete = await concept.login({
+      username: userToDelete,
+      password: deletePass,
+    });
+    assertEquals(
+      "user" in loginBeforeDelete,
+      true,
+      "Login before deletion should succeed",
+    );
+    assertEquals(
+      (loginBeforeDelete as { user: ID }).user,
+      userId,
+      "Logged in user ID should match",
+    );
+
+    // 3. Delete the user with correct credentials
+    // Action: deleteUser(username: String, password: String)
+    // Requires: a user exists that has a username and password that matches (satisfied)
+    // Effects: deletes the user
+    const deleteResult = await concept.deleteUser({
+      username: userToDelete,
+      password: deletePass,
+    });
+    assertEquals(
+      typeof deleteResult,
+      "object",
+      "Delete user result should be an object",
+    );
+    assertEquals(
+      "error" in deleteResult,
+      false,
+      "Delete user should not return an error",
+    );
+    assertEquals(
+      deleteResult,
+      {} as Empty,
+      "Successful delete user should return an empty object",
+    );
+
+    // 4. Attempt to login with the deleted user's credentials (should fail)
+    const loginAfterDelete = await concept.login({
+      username: userToDelete,
+      password: deletePass,
+    });
+    assertEquals(
+      "error" in loginAfterDelete,
+      true,
+      "Login after deletion should fail",
+    );
+    assertEquals(
+      (loginAfterDelete as { error: string }).error,
+      "Invalid username or password.",
+      "Error message for login after deletion",
+    );
+
+    // 5. Attempt to delete a non-existent user
+    // Action: deleteUser(username: String, password: String)
+    // Requires: a user exists that has a username and password that matches (NOT satisfied)
+    // Effects: returns an error
+    const deleteNonExistentResult = await concept.deleteUser({
+      username: "nonexistent",
+      password: "anypass",
+    });
+    assertEquals(
+      "error" in deleteNonExistentResult,
+      true,
+      "Delete non-existent user should fail",
+    );
+    assertEquals(
+      (deleteNonExistentResult as { error: string }).error,
+      "Invalid username or password, or user does not exist.",
+      "Error message for deleting non-existent user",
+    );
+
+    // 6. Attempt to delete a user with incorrect password (even if username exists/existed)
+    // Action: deleteUser(username: String, password: String)
+    // Requires: a user exists that has a username and password that matches (NOT satisfied)
+    // Effects: returns an error
+    const deleteWrongPassResult = await concept.deleteUser({
+      username: userToDelete, // username might match a record that was already deleted
+      password: "wrongpass",
+    });
+    assertEquals(
+      "error" in deleteWrongPassResult,
+      true,
+      "Delete with wrong password should fail",
+    );
+    assertEquals(
+      (deleteWrongPassResult as { error: string }).error,
+      "Invalid username or password, or user does not exist.",
+      "Error message for deleting with wrong password",
+    );
+  });
+
+  await t.step(
+    "Scenario 5: Register, Delete, and Re-register the same user",
+    async () => {
+      const userToReregister = "recycleduser";
+      const firstPassword = "firstPass";
+      const secondPassword = "secondPass";
+
+      // 1. Register the user for the first time
+      const firstRegisterResult = await concept.register({
+        username: userToReregister,
+        password: firstPassword,
+      });
+      assertEquals(
+        "user" in firstRegisterResult,
+        true,
+        "First registration should succeed.",
+      );
+      const firstUserId = (firstRegisterResult as { user: ID }).user;
+
+      // 2. Login successfully with first credentials
+      const firstLoginResult = await concept.login({
+        username: userToReregister,
+        password: firstPassword,
+      });
+      assertEquals(
+        "user" in firstLoginResult,
+        true,
+        "First login should succeed.",
+      );
+      assertEquals(
+        (firstLoginResult as { user: ID }).user,
+        firstUserId,
+        "First logged in user ID should match.",
+      );
+
+      // 3. Delete the user
+      const deleteResult = await concept.deleteUser({
+        username: userToReregister,
+        password: firstPassword,
+      });
+      assertEquals(
+        "error" in deleteResult,
+        false,
+        "Deletion of the first registration should succeed.",
+      );
+      assertEquals(deleteResult, {} as Empty);
+
+      // 4. Attempt to login with the deleted user (should fail)
+      const loginAfterFirstDelete = await concept.login({
+        username: userToReregister,
+        password: firstPassword,
+      });
+      assertEquals(
+        "error" in loginAfterFirstDelete,
+        true,
+        "Login after first delete should fail.",
+      );
+
+      // 5. Re-register the user with the same username but a new password
+      // Requires: a user with the same username doesn't already exist (satisfied, as it was deleted)
+      // Effects: creates and saves a new user. Returns the user
+      const reregisterResult = await concept.register({
+        username: userToReregister,
+        password: secondPassword,
+      });
+      assertEquals(
+        "user" in reregisterResult,
+        true,
+        "Re-registration with same username should succeed.",
+      );
+      const reRegisteredUserId = (reregisterResult as { user: ID }).user;
+      assertEquals(
+        firstUserId !== reRegisteredUserId,
+        true,
+        "User ID should be different after re-registration (due to freshID()).",
+      );
+
+      // 6. Login successfully with the re-registered user's new password
+      const reregisterLoginResult = await concept.login({
+        username: userToReregister,
+        password: secondPassword,
+      });
+      assertEquals(
+        "user" in reregisterLoginResult,
+        true,
+        "Login after re-registration should succeed.",
+      );
+      assertEquals(
+        (reregisterLoginResult as { user: ID }).user,
+        reRegisteredUserId,
+        "Logged in user ID should match the re-registered user ID.",
+      );
+
+      // 7. Attempt to login with the first password (should fail for the re-registered user)
+      const oldPasswordLoginAttempt = await concept.login({
+        username: userToReregister,
+        password: firstPassword,
+      });
+      assertEquals(
+        "error" in oldPasswordLoginAttempt,
+        true,
+        "Login with the first password after re-registration should fail.",
+      );
+    },
   );
-  registeredUserId = (registerResult as { user: ID }).user;
 
-  try {
-    await t.step(
-      "should successfully change password with correct old credentials",
-      async () => {
-        // Perform the changePassword action
-        const result = await userAuth.changePassword({
-          username: testUsername,
-          oldPassword: initialPassword,
-          newPassword: newPassword,
-        });
-
-        // Check if the password change was successful (returns an empty object)
-        assertEquals(
-          result,
-          {},
-          "Expected successful password change to return an empty object.",
-        );
-
-        // Verify effects: the user's password in the database should be updated
-        const userInDb = await userAuth["users"].findOne({
-          _id: registeredUserId,
-        });
-        assert(
-          userInDb !== null,
-          "User should still exist after password change.",
-        );
-        assertEquals(userInDb.password, newPassword);
-        assertNotEquals(userInDb.password, initialPassword);
-
-        // Verify that login with old password fails
-        const loginWithOldPass = await userAuth.login({
-          username: testUsername,
-          password: initialPassword,
-        });
-        assertObjectMatch(loginWithOldPass, {
-          error: "Invalid username or password.",
-        });
-
-        // Verify that login with new password succeeds
-        const loginWithNewPass = await userAuth.login({
-          username: testUsername,
-          password: newPassword,
-        });
-        assert(
-          "user" in loginWithNewPass,
-          "Login with new password should succeed.",
-        );
-        assertEquals((loginWithNewPass as { user: ID }).user, registeredUserId);
-      },
-    );
-
-    await t.step(
-      "should fail to change password with an incorrect old password (precondition)",
-      async () => {
-        // Setup: Register another user for this specific test
-        const userForWrongOldPass = "wrongOldPassUser";
-        const correctPassword = "correctPassForUser";
-        const anotherNewPassword = "anotherNewPass";
-        const registerRes = await userAuth.register({
-          username: userForWrongOldPass,
-          password: correctPassword,
-        });
-        assert(
-          "user" in registerRes,
-          "Setup failed for wrong old password test.",
-        );
-        const userForWrongOldPassId = (registerRes as { user: ID }).user;
-
-        // Attempt to change password with correct username but incorrect old password
-        const result = await userAuth.changePassword({
-          username: userForWrongOldPass,
-          oldPassword: "incorrectOldPassword",
-          newPassword: anotherNewPassword,
-        });
-
-        // Check if the password change failed with an error
-        assertObjectMatch(result, {
-          error: "Invalid username or old password.",
-        });
-        assert(
-          !("user" in result),
-          "Password change with wrong old password should not succeed.",
-        );
-
-        // Verify effects: the user's password in the database should NOT be updated
-        const userInDb = await userAuth["users"].findOne({
-          _id: userForWrongOldPassId,
-        });
-        assert(
-          userInDb !== null,
-          "User should still exist after failed password change attempt.",
-        );
-        assertEquals(
-          userInDb.password,
-          correctPassword,
-          "Password should remain unchanged after failed attempt.",
-        );
-
-        // Verify that login with original password still works
-        const loginWithOriginalPass = await userAuth.login({
-          username: userForWrongOldPass,
-          password: correctPassword,
-        });
-        assert(
-          "user" in loginWithOriginalPass,
-          "Login with original password should still succeed.",
-        );
-      },
-    );
-
-    await t.step(
-      "should fail to change password for a non-existent user (precondition)",
-      async () => {
-        const nonExistentUsername = "phantomUser";
-        const anyOldPassword = "anyPassword";
-        const dummyNewPassword = "dummyNewPassword";
-
-        // Attempt to change password for a username that was never registered
-        const result = await userAuth.changePassword({
-          username: nonExistentUsername,
-          oldPassword: anyOldPassword,
-          newPassword: dummyNewPassword,
-        });
-
-        // Check if the password change failed with an error
-        assertObjectMatch(result, {
-          error: "Invalid username or old password.",
-        });
-        assert(
-          !("user" in result),
-          "Password change for non-existent user should not succeed.",
-        );
-
-        // Verify effects: no new user or password change occurred
-        const userInDb = await userAuth["users"].findOne({
-          username: nonExistentUsername,
-        });
-        assertEquals(
-          userInDb,
-          null,
-          "No user should exist with this username.",
-        );
-      },
-    );
-
-    await t.step(
-      "should allow changing password to the same as old password",
-      async () => {
-        // Setup: Register another user for this specific test
-        const userSamePass = "userSamePass";
-        const originalPass = "originalPass";
-        const registerRes = await userAuth.register({
-          username: userSamePass,
-          password: originalPass,
-        });
-        assert(
-          "user" in registerRes,
-          "Setup failed for same password test.",
-        );
-        const userSamePassId = (registerRes as { user: ID }).user;
-
-        // Attempt to change password to the same old password
-        const result = await userAuth.changePassword({
-          username: userSamePass,
-          oldPassword: originalPass,
-          newPassword: originalPass, // New password is the same as old
-        });
-
-        // Check if the password change was successful (returns an empty object)
-        assertEquals(
-          result,
-          {},
-          "Expected successful password change to return an empty object even if new password is same.",
-        );
-
-        // Verify effects: the user's password in the database should still be the same
-        const userInDb = await userAuth["users"].findOne({
-          _id: userSamePassId,
-        });
-        assert(
-          userInDb !== null,
-          "User should still exist after same password change attempt.",
-        );
-        assertEquals(
-          userInDb.password,
-          originalPass,
-          "Password should still be original after changing to same password.",
-        );
-
-        // Verify that login with this password still works
-        const loginRes = await userAuth.login({
-          username: userSamePass,
-          password: originalPass,
-        });
-        assert(
-          "user" in loginRes,
-          "Login with original/same password should succeed.",
-        );
-      },
-    );
-  } finally {
-    await client.close();
-  }
+  await client.close(); // Close the MongoDB client connection
 });

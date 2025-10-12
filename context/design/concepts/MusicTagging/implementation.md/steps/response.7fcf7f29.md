@@ -1,14 +1,8 @@
-[@concept-design-overview](../../background/concept-design-overview.md)
-
-[@concept-specifications](../../background/concept-specifications.md)
-
-[@implementing-concepts](../../background/implementing-concepts.md)
-
-[@userauthentication-specification](specification.md)
-
-[@current-implementation](../../../src/concepts/MusicTagging/MusicTaggingConcept.ts)
-
-# prompt: Given the current implementation of MusicTagging, create a method for deleteRegistry only. do not implement anything else. Only return the method. Do not return anything already implemented
+---
+timestamp: 'Sat Oct 11 2025 21:32:08 GMT-0400 (Eastern Daylight Time)'
+parent: '[[../20251011_213208.fd52cc44.md]]'
+content_id: 7fcf7f29c34cd81836db6551aecc7fbb1c5bed09fa7e97b25d404ea19874ba55
+---
 
 # response:
 

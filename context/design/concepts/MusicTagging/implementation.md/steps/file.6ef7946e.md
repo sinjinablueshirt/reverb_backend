@@ -1,3 +1,12 @@
+---
+timestamp: 'Sat Oct 11 2025 21:03:44 GMT-0400 (Eastern Daylight Time)'
+parent: '[[../20251011_210344.ab0646aa.md]]'
+content_id: 6ef7946ea712f940a05396ddb39c3453a7417d893f654f101e579c15aafcb2bd
+---
+
+# file: src/concepts/MusicTagging/MusicTaggingConcept.ts
+
+```typescript
 import { Collection, Db } from "npm:mongodb";
 import { Empty, ID } from "@utils/types.ts";
 import { freshID } from "@utils/database.ts";
@@ -89,54 +98,6 @@ export default class MusicTaggingConcept {
 
     return {};
   }
-
-  /**
-   * removeTag (registry: Registry, tag: String)
-   *
-   * @requires `registry` exists in the state and `tag` is present in `registry.tags`.
-   * @effects `tag` is removed from the `tags` set of the specified `registry`.
-   */
-  async removeTag(
-    { registry, tag }: { registry: RegistryID; tag: string },
-  ): Promise<Empty | { error: string }> {
-    // Check precondition: registry exists
-    const existingRegistry = await this.registries.findOne({ _id: registry });
-    if (!existingRegistry) {
-      return { error: `Registry ${registry} not found.` };
-    }
-
-    // Check precondition: tag is present in registry.tags
-    if (!existingRegistry.tags.includes(tag)) {
-      return { error: `Tag "${tag}" not found for registry ${registry}.` };
-    }
-
-    // Effect: Remove tag from the tags set
-    await this.registries.updateOne(
-      { _id: registry },
-      { $pull: { tags: tag } }, // $pull removes all instances of the specified value from an array
-    );
-
-    return {};
-  }
-
-  /**
-   * deleteRegistry (registry: Registry)
-   *
-   * @requires `registry` exists in the state.
-   * @effects The specified `registry` entry and all its associated data are removed from the state.
-   */
-  async deleteRegistry(
-    { registry }: { registry: RegistryID },
-  ): Promise<Empty | { error: string }> {
-    // Check precondition: registry exists
-    const existingRegistry = await this.registries.findOne({ _id: registry });
-    if (!existingRegistry) {
-      return { error: `Registry ${registry} not found.` };
-    }
-
-    // Effect: Remove the specified registry entry
-    await this.registries.deleteOne({ _id: registry });
-
-    return {};
-  }
 }
+
+```

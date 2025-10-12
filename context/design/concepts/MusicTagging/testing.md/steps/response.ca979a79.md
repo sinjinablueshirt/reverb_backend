@@ -1,12 +1,8 @@
-[@specification](specification.md)
-
-[@implementation](../../../src/concepts/MusicTagging/MusicTaggingConcept.ts)
-
-[@testing-concepts](../../background/testing-concepts.md)
-
-[@current-test-file](../../../src/concepts/MusicTagging/MusicTaggingConcept.test.ts)
-
-# prompt: ONLY create tests that test the registerResource, addTag, removeTag, deleteRegistry methods. Be sure to make tests that follow the operational principle of the concept specification. Tests should use a sequence of action executions that corresponds to the operational principle, representing the common expected usage of the concept. These sequence is not required to use all the actions; operational principles often do not include a deletion action, for example. Test sequences of action executions that correspond to less common cases: probing interesting corners of the functionality, undoing actions with deletions and cancellations, repeating actions with the same arguments, etc. In some of these scenarios actions may be expected to throw errors. You should have one test sequence for the operational principle, and 3-5 additional interesting scenarios. Every action should be executed successfully in at least one of the scenarios.
+---
+timestamp: 'Sat Oct 11 2025 21:38:29 GMT-0400 (Eastern Daylight Time)'
+parent: '[[../20251011_213829.3771f4b5.md]]'
+content_id: ca979a79c0367d377a3073da56e6e1e1f87af9751555880c3c5c3463513beb82
+---
 
 # response:
 
