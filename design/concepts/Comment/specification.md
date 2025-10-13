@@ -22,6 +22,6 @@
         * **requires**: the `resource` is registered\
         * **effects**: creates and saves a new `comment` made by `commenter` with `text` made at `date` under the `resource`. Returns the newly made `comment`
 
-    * `removeComment(comment: Comment)`
-        * **requires**: `comment` exists
+    * `removeComment(comment: Comment, user: User)`
+        * **requires**: `comment` exists and `user` is its `commenter`
         * **effects**: removes the `comment` from the `resource` it is bound to and deletes it

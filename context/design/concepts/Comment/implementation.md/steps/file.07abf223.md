@@ -1,3 +1,12 @@
+---
+timestamp: 'Sun Oct 12 2025 19:17:18 GMT-0400 (Eastern Daylight Time)'
+parent: '[[../20251012_191718.69fd06e4.md]]'
+content_id: 07abf223fe8d7d86aca6478cb1f817bd8fe3ee27b7818c60242a8e791a8bc137
+---
+
+# file: src/concepts/Comment/CommentConcept.ts
+
+```typescript
 import { Collection, Db } from "npm:mongodb";
 import { Empty, ID } from "@utils/types.ts";
 import { freshID } from "@utils/database.ts"; // Assuming freshID is for creating new IDs for documents
@@ -160,3 +169,5 @@ export default class CommentConcept {
     return {};
   }
 }
+
+```

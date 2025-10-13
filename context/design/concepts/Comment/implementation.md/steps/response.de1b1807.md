@@ -1,14 +1,8 @@
-[@concept-design-overview](../../background/concept-design-overview.md)
-
-[@concept-specifications](../../background/concept-specifications.md)
-
-[@implementing-concepts](../../background/implementing-concepts.md)
-
-[@comment-specification](specification.md)
-
-[@current-implementation](../../../src/concepts/Comment/CommentConcept.ts)
-
-# prompt: Given the current implementation and specification of the Comment concept, create an action for removeComment ONLY. Do not return anything that is already in the implementation
+---
+timestamp: 'Sun Oct 12 2025 19:16:17 GMT-0400 (Eastern Daylight Time)'
+parent: '[[../20251012_191617.c05289c3.md]]'
+content_id: de1b1807cab78092153b85aaac797de0180a9ac9eb98f8ef9c8d064e973381ea
+---
 
 # response:
 

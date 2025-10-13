@@ -4,7 +4,7 @@ import { testDb } from "@utils/database.ts";
 import CommentConcept from "./CommentConcept.ts";
 import { freshID } from "@utils/database.ts";
 
-Deno.test("CommentConcept: Full functionality and scenarios", async (test) => {
+Deno.test("CommentConcept: Register, AddComment, and RemoveComment functionality", async (test) => {
   let db: Db;
   let client: MongoClient;
   let concept: CommentConcept;
@@ -14,9 +14,10 @@ Deno.test("CommentConcept: Full functionality and scenarios", async (test) => {
   const resourceB = freshID(); // For unregistered resource scenarios
   const user1 = freshID();
   const user2 = freshID();
+  const user3 = freshID(); // For testing comment deletion by wrong user
 
-  // # trace: Operational Principle: Register a resource, add multiple comments, and remove comments.
-  await test.step("1. Operational Principle: Register, add, and remove comments", async () => {
+  // # trace: Operational Principle: Register a resource and add multiple comments, then delete one.
+  await test.step("1. Operational Principle: Register a resource, add multiple comments, and delete one", async () => {
     [db, client] = await testDb();
     concept = new CommentConcept(db);
 
@@ -83,7 +84,7 @@ Deno.test("CommentConcept: Full functionality and scenarios", async (test) => {
       "Comment IDs should be unique for different comments",
     );
 
-    // Verify principle: resourceA now has both comments associated
+    // Verify resourceA now has both comments associated
     storedResourceA = await concept.resources.findOne({ _id: resourceA });
     assertEquals(
       storedResourceA?.comments.length,
@@ -136,59 +137,50 @@ Deno.test("CommentConcept: Full functionality and scenarios", async (test) => {
       "Comment 2 date should match",
     );
 
-    // Action: removeComment(commentId1)
-    // Requires: commentId1 exists (satisfied)
-    // Effects: removes commentId1 from resourceA and deletes commentId1 document
-    const removeResult1 = await concept.removeComment({ comment: commentId1 });
-    assertEquals(removeResult1, {}, "Should successfully remove commentId1");
+    // Action: removeComment(commentId1, user1)
+    // Requires: commentId1 exists and user1 is its commenter (satisfied)
+    // Effects: removes commentId1 from resourceA and deletes commentId1
+    const removeCommentResult1 = await concept.removeComment({
+      comment: commentId1,
+      user: user1,
+    });
+    assertEquals(
+      removeCommentResult1,
+      {},
+      "Should successfully remove commentId1 by its commenter",
+    );
 
-    // Verify state after removing comment1
+    // Verify state after deletion:
+    // 1. commentId1 should no longer be in resourceA's comments array
     storedResourceA = await concept.resources.findOne({ _id: resourceA });
     assertEquals(
       storedResourceA?.comments.length,
       1,
-      "Resource A should have 1 comment after removing one",
+      "Resource A should have 1 comment after deleting one",
     );
     assertEquals(
-      !storedResourceA?.comments.includes(commentId1),
-      true,
-      "Resource A should NOT contain commentId1",
+      storedResourceA?.comments.includes(commentId1),
+      false,
+      "Resource A should NOT contain commentId1 after deletion",
     );
     assertEquals(
       storedResourceA?.comments.includes(commentId2),
       true,
-      "Resource A should still contain commentId2",
+      "Resource A should still contain commentId2 after commentId1 deletion",
     );
 
-    const checkComment1Deleted = await concept.comments.findOne({
-      _id: commentId1,
-    });
-    assertEquals(
-      checkComment1Deleted,
-      null,
-      "Comment 1 document should be deleted from the comments collection",
-    );
+    // 2. commentId1 should be deleted from the comments collection
+    const deletedComment1 = await concept.comments.findOne({ _id: commentId1 });
+    assertEquals(deletedComment1, null, "Comment 1 should be deleted");
 
-    // Action: removeComment(commentId2)
-    // Requires: commentId2 exists (satisfied)
-    // Effects: removes commentId2 from resourceA and deletes commentId2 document
-    const removeResult2 = await concept.removeComment({ comment: commentId2 });
-    assertEquals(removeResult2, {}, "Should successfully remove commentId2");
-
-    // Verify final state after removing all comments
-    storedResourceA = await concept.resources.findOne({ _id: resourceA });
-    assertEquals(
-      storedResourceA?.comments.length,
-      0,
-      "Resource A should have 0 comments after removing all",
-    );
-    const checkComment2Deleted = await concept.comments.findOne({
+    // 3. commentId2 (the other comment) should still exist
+    const stillExistingComment2 = await concept.comments.findOne({
       _id: commentId2,
     });
     assertEquals(
-      checkComment2Deleted,
-      null,
-      "Comment 2 document should be deleted from the comments collection",
+      stillExistingComment2?.text,
+      "Second comment by another user.",
+      "Comment 2 should still exist and its text should match",
     );
 
     await client.close();
@@ -262,8 +254,9 @@ Deno.test("CommentConcept: Full functionality and scenarios", async (test) => {
     await client.close();
   });
 
-  // Scenario: Add multiple comments from the same user to the same resource, then remove one.
-  await test.step("4. Scenario: Multiple comments from same user, then partial removal and invalid removal attempt", async () => {
+  // Scenario: Add multiple comments from the same user to the same resource.
+  // This demonstrates that multiple comments are distinct even if from the same user.
+  await test.step("4. Scenario: Multiple comments from the same user on the same resource", async () => {
     [db, client] = await testDb();
     concept = new CommentConcept(db);
 
@@ -299,7 +292,7 @@ Deno.test("CommentConcept: Full functionality and scenarios", async (test) => {
     );
 
     // Verify resource A has both comments
-    let storedResourceA = await concept.resources.findOne({ _id: resourceA });
+    const storedResourceA = await concept.resources.findOne({ _id: resourceA });
     assertEquals(
       storedResourceA?.comments.length,
       2,
@@ -340,69 +333,11 @@ Deno.test("CommentConcept: Full functionality and scenarios", async (test) => {
       "Comment 4 text should match",
     );
 
-    // Action: removeComment(commentId3)
-    const removeResult3 = await concept.removeComment({ comment: commentId3 });
-    assertEquals(removeResult3, {}, "Should successfully remove commentId3");
-
-    // Verify state after removing comment3
-    storedResourceA = await concept.resources.findOne({ _id: resourceA });
-    assertEquals(
-      storedResourceA?.comments.length,
-      1,
-      "Resource A should have 1 comment after removing one",
-    );
-    assertEquals(
-      !storedResourceA?.comments.includes(commentId3),
-      true,
-      "Resource A should NOT contain commentId3",
-    );
-    assertEquals(
-      storedResourceA?.comments.includes(commentId4),
-      true,
-      "Resource A should still contain commentId4",
-    );
-    const checkComment3Deleted = await concept.comments.findOne({
-      _id: commentId3,
-    });
-    assertEquals(
-      checkComment3Deleted,
-      null,
-      "Comment 3 document should be deleted from the comments collection",
-    );
-
-    // Action: removeComment(nonExistentComment)
-    // Requires: comment exists (not satisfied)
-    // Expected: error
-    const nonExistentCommentId = freshID();
-    const removeNonExistentResult = await concept.removeComment({
-      comment: nonExistentCommentId,
-    });
-    assertEquals(
-      removeNonExistentResult,
-      { error: `Comment '${nonExistentCommentId}' does not exist.` },
-      "Should return an error when attempting to remove a non-existent comment",
-    );
-
-    // Verify state is unchanged after failed removal
-    const commentsCountAfterFailedRemove = await concept.comments
-      .countDocuments();
-    assertEquals(
-      commentsCountAfterFailedRemove,
-      1, // Only commentId4 remains
-      "Comments count should remain 1 after attempting to remove non-existent comment",
-    );
-    storedResourceA = await concept.resources.findOne({ _id: resourceA });
-    assertEquals(
-      storedResourceA?.comments.length,
-      1,
-      "Resource A comments count should remain 1 after attempting to remove non-existent comment",
-    );
-
     await client.close();
   });
 
-  // Scenario: Adding comments with identical content (text, commenter, date) but expecting unique comments, then removing them.
-  await test.step("5. Scenario: Adding identical content comments and removing them one by one", async () => {
+  // Scenario: Adding comments with identical content (text, commenter, date) but expecting unique comments.
+  await test.step("5. Scenario: Adding comments with identical content creates distinct entries", async () => {
     [db, client] = await testDb();
     concept = new CommentConcept(db);
 
@@ -440,7 +375,7 @@ Deno.test("CommentConcept: Full functionality and scenarios", async (test) => {
     );
 
     // Verify resourceA has both comments
-    let storedResourceA = await concept.resources.findOne({ _id: resourceA });
+    const storedResourceA = await concept.resources.findOne({ _id: resourceA });
     assertEquals(
       storedResourceA?.comments.length,
       2,
@@ -496,58 +431,124 @@ Deno.test("CommentConcept: Full functionality and scenarios", async (test) => {
       "Second identical comment date should match",
     );
 
-    // Action: removeComment(commentId5a)
-    const removeResult5a = await concept.removeComment({
-      comment: commentId5a,
-    });
-    assertEquals(removeResult5a, {}, "Should successfully remove commentId5a");
+    await client.close();
+  });
 
-    // Verify state after removing comment5a
+  // Scenario: `removeComment` precondition failures and successful removal
+  await test.step("6. Scenario: removeComment precondition failures and successful removal", async () => {
+    [db, client] = await testDb();
+    concept = new CommentConcept(db);
+
+    // Setup: Register resource and add a comment that will be used for testing
+    await concept.register({ resource: resourceA });
+    const date = new Date("2023-04-01T11:00:00Z");
+    const addResult = await concept.addComment({
+      resource: resourceA,
+      commenter: user1,
+      text: "Comment for removal tests",
+      date: date,
+    });
+    if ("error" in addResult) throw new Error(addResult.error);
+    const commentIdToDelete = addResult.comment;
+
+    // Precondition 1 failure: `comment` does not exist
+    const nonExistentCommentId = freshID();
+    const removeNonExistentResult = await concept.removeComment({
+      comment: nonExistentCommentId,
+      user: user1,
+    });
+    assertEquals(
+      removeNonExistentResult,
+      { error: `Comment '${nonExistentCommentId}' not found.` },
+      "Should return an error when attempting to remove a non-existent comment",
+    );
+
+    // Verify existing comment is still there and linked
+    let storedResourceA = await concept.resources.findOne({ _id: resourceA });
+    assertEquals(
+      storedResourceA?.comments.length,
+      1,
+      "Resource A should still have 1 comment after failed removal of non-existent",
+    );
+    assertEquals(
+      storedResourceA?.comments.includes(commentIdToDelete),
+      true,
+      "Resource A should still contain the original comment",
+    );
+    let storedComment = await concept.comments.findOne({
+      _id: commentIdToDelete,
+    });
+    assertEquals(
+      storedComment !== null,
+      true,
+      "Original comment should still exist",
+    );
+
+    // Precondition 2 failure: `user` is not its `commenter`
+    const removeWrongUserResult = await concept.removeComment({
+      comment: commentIdToDelete,
+      user: user3, // user3 is not user1
+    });
+    assertEquals(
+      removeWrongUserResult,
+      {
+        error:
+          `User '${user3}' is not the commenter of comment '${commentIdToDelete}'.`,
+      },
+      "Should return an error when a different user attempts to remove a comment",
+    );
+
+    // Verify existing comment is still there and linked after wrong-user attempt
     storedResourceA = await concept.resources.findOne({ _id: resourceA });
     assertEquals(
       storedResourceA?.comments.length,
       1,
-      "Resource A should have 1 comment after removing one identical comment",
+      "Resource A should still have 1 comment after failed removal by wrong user",
     );
     assertEquals(
-      !storedResourceA?.comments.includes(commentId5a),
+      storedResourceA?.comments.includes(commentIdToDelete),
       true,
-      "Resource A should NOT contain commentId5a",
+      "Resource A should still contain the original comment",
     );
-    assertEquals(
-      storedResourceA?.comments.includes(commentId5b),
-      true,
-      "Resource A should still contain commentId5b",
-    );
-    const checkComment5aDeleted = await concept.comments.findOne({
-      _id: commentId5a,
+    storedComment = await concept.comments.findOne({
+      _id: commentIdToDelete,
     });
     assertEquals(
-      checkComment5aDeleted,
-      null,
-      "Comment 5a document should be deleted from the comments collection",
+      storedComment !== null,
+      true,
+      "Original comment should still exist",
     );
 
-    // Action: removeComment(commentId5b)
-    const removeResult5b = await concept.removeComment({
-      comment: commentId5b,
+    // Successful removal (using the correct user)
+    const removeSuccessResult = await concept.removeComment({
+      comment: commentIdToDelete,
+      user: user1,
     });
-    assertEquals(removeResult5b, {}, "Should successfully remove commentId5b");
+    assertEquals(
+      removeSuccessResult,
+      {},
+      "Should successfully remove the comment by its rightful commenter",
+    );
 
-    // Verify final state after removing all identical comments
+    // Verify comment is truly gone from resource and comments collection
     storedResourceA = await concept.resources.findOne({ _id: resourceA });
     assertEquals(
       storedResourceA?.comments.length,
       0,
-      "Resource A should have 0 comments after removing all identical comments",
+      "Resource A should have 0 comments after successful removal",
     );
-    const checkComment5bDeleted = await concept.comments.findOne({
-      _id: commentId5b,
+    assertEquals(
+      storedResourceA?.comments.includes(commentIdToDelete),
+      false,
+      "Resource A should no longer contain the removed comment",
+    );
+    storedComment = await concept.comments.findOne({
+      _id: commentIdToDelete,
     });
     assertEquals(
-      checkComment5bDeleted,
+      storedComment,
       null,
-      "Comment 5b document should be deleted from the comments collection",
+      "The comment document should be deleted from the comments collection",
     );
 
     await client.close();
