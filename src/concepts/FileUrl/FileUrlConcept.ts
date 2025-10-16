@@ -19,6 +19,7 @@ type User = ID;
  *   a `filePath` of type `string`
  *   an `owner` of type `User`
  *   a `url` of type `string`
+ *   a `gcsObjectName` of type `string` (for internal management)
  */
 interface FileDocument {
   _id: FileID; // The unique identifier for this file record (concept's 'File' type)

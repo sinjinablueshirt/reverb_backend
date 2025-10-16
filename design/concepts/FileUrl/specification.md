@@ -10,11 +10,12 @@
         * a `filePath` of type `string`
         * an `owner` of type `User`
         * a `url` of type `string`
+        * a `gcsObjectName` of type `string`
 
 * **actions**
     * `uploadFile(filePath: string, owner: User): (file: File)`
         * **requires**: `filePath` points to a valid file and isn't already uploaded
-        * **effects**: saves a new `file` with `filePath` and `owner`. Uploads the contents to an external storage service and obtains a unique `url` to access this file. Saves `url` to the `file` and returns `file`
+        * **effects**: saves a new `file` with `filePath` and `owner` and unique `gcsObjectName`. Uploads the contents to an external storage service and obtains a unique `url` to access this file. Saves `url` to the `file` and returns `file`
 
     * `deleteFile(file: File, user: User)`
         * **requires**: `file` exists and `user` is its `owner`
