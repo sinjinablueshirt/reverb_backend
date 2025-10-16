@@ -1,0 +1,3 @@
+# FileUrl Design:
+
+As mentioned in the [overall design changes file](../../design.md), FileUrl is a brand new concept that I devised for this assignment. Its closest relative from the earlier assignments is my ResourceManagement concept. Basically, this concept has more emphasis on handling files through URLs and Google Cloud Storage API. In its [specification](specification.md), I tried my best to specify a concept that used the API, but I'm not too sure if it's necessarily "correct". I only have two actions, which are uploading and deleting files. I figured that other actions wouldn't really be needed. I'm not 100% sure about this though as I'm not super knowledgeable about using uploaded files in apps.

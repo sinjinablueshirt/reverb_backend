@@ -1,16 +1,8 @@
-[@specification](specification.md)
-
-[@implementation](../../../src/concepts/UserAuthentication/UserAuthenticationConcept.ts)
-
-[@testing-concepts](../../background/testing-concepts.md)
-
-[@current-test-file](../../../src/concepts/UserAuthentication/UserAuthenticationConcept.test.ts)
-
-# prompt: create tests that test all methods of the concept. Be sure to make tests that follow the operational principle of the concept specification. Tests should use a sequence of action executions that corresponds to the operational principle, representing the common expected usage of the concept. These sequence is not required to use all the actions; operational principles often do not include a deletion action, for example. Test sequences of action executions that correspond to less common cases: probing interesting corners of the functionality, undoing actions with deletions and cancellations, repeating actions with the same arguments, etc. In some of these scenarios actions may be expected to throw errors. You should have one test sequence for the operational principle, and 3-5 additional interesting scenarios. Every action should be executed successfully in at least one of the scenarios.
-
-# prompt: add console.logs that display helpful messages to the console with action inputs and outputs so that a human reader can make sense of the test execution when it runs in the console
-
-# prompt: add green checkmark when tests pass. use a red X only when a test fails
+---
+timestamp: 'Thu Oct 16 2025 17:10:34 GMT-0400 (Eastern Daylight Time)'
+parent: '[[../20251016_171034.396bd4df.md]]'
+content_id: 87a3c2517da5404ce6ec6141bd0acb39099225c26dc53b0a838662dc9af7f402
+---
 
 # response:
 

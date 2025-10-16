@@ -1,16 +1,8 @@
-[@specification](specification.md)
-
-[@implementation](../../../src/concepts/UserAuthentication/UserAuthenticationConcept.ts)
-
-[@testing-concepts](../../background/testing-concepts.md)
-
-[@current-test-file](../../../src/concepts/UserAuthentication/UserAuthenticationConcept.test.ts)
-
-# prompt: create tests that test all methods of the concept. Be sure to make tests that follow the operational principle of the concept specification. Tests should use a sequence of action executions that corresponds to the operational principle, representing the common expected usage of the concept. These sequence is not required to use all the actions; operational principles often do not include a deletion action, for example. Test sequences of action executions that correspond to less common cases: probing interesting corners of the functionality, undoing actions with deletions and cancellations, repeating actions with the same arguments, etc. In some of these scenarios actions may be expected to throw errors. You should have one test sequence for the operational principle, and 3-5 additional interesting scenarios. Every action should be executed successfully in at least one of the scenarios.
-
-# prompt: add console.logs that display helpful messages to the console with action inputs and outputs so that a human reader can make sense of the test execution when it runs in the console
-
-# prompt: add green checkmark when tests pass. use a red X only when a test fails
+---
+timestamp: 'Thu Oct 16 2025 17:05:24 GMT-0400 (Eastern Daylight Time)'
+parent: '[[../20251016_170524.5b3894a7.md]]'
+content_id: 4b2c241bbf6d412b2cc13ebfaa735be3d3fcd1c65e6c98152cb7b42ba4bb91a6
+---
 
 # response:
 
@@ -49,7 +41,7 @@ Deno.test("UserAuthenticationConcept", async (t) => {
     assertEquals("user" in registerResult, true, "Register result should contain 'user'");
     const userId = (registerResult as { user: ID }).user;
     assertEquals(typeof userId, "string", "User ID should be a string"); // Assuming ID is a string type
-    console.log(`✅ Assertion: User '${TEST_USERNAME}' registered successfully with ID: ${userId}`);
+    console.log(`Assertion: User '${TEST_USERNAME}' registered successfully with ID: ${userId}`);
 
     // 2. Log in with the correct credentials
     // Action: login(username: String, password: String): User
@@ -65,7 +57,7 @@ Deno.test("UserAuthenticationConcept", async (t) => {
     assertEquals(typeof loginResult, "object", "Login result should be an object");
     assertEquals("user" in loginResult, true, "Login result should contain 'user'");
     assertEquals((loginResult as { user: ID }).user, userId, "Logged in user ID should match registered user ID");
-    console.log(`✅ Assertion: User '${TEST_USERNAME}' logged in successfully with ID: ${(loginResult as { user: ID }).user}`);
+    console.log(`Assertion: User '${TEST_USERNAME}' logged in successfully with ID: ${(loginResult as { user: ID }).user}`);
   });
 
   await t.step("Scenario 2: Failed Registration and Login Attempts", async () => {
@@ -81,7 +73,7 @@ Deno.test("UserAuthenticationConcept", async (t) => {
       password: existingPassword,
     });
     assertEquals("user" in initialRegisterResult, true, "Initial registration should succeed");
-    console.log(`✅ Pre-registration output: ${JSON.stringify(initialRegisterResult)}`);
+    console.log(`Pre-registration output: ${JSON.stringify(initialRegisterResult)}`);
 
     // 1. Attempt to register a user with an already existing username
     // Action: register(username: String, password: String): User
@@ -99,7 +91,7 @@ Deno.test("UserAuthenticationConcept", async (t) => {
       "A user with this username already exists.",
       "Error message for existing username mismatch",
     );
-    console.log(`✅ Assertion: Registration with existing username correctly returned error: '${(registerConflictResult as { error: string }).error}'`);
+    console.log(`Assertion: Registration with existing username correctly returned error: '${(registerConflictResult as { error: string }).error}'`);
 
 
     // 2. Attempt to login with incorrect password for an existing user
@@ -118,7 +110,7 @@ Deno.test("UserAuthenticationConcept", async (t) => {
       "Invalid username or password.",
       "Error message for incorrect password",
     );
-    console.log(`✅ Assertion: Login with wrong password correctly returned error: '${(loginWrongPasswordResult as { error: string }).error}'`);
+    console.log(`Assertion: Login with wrong password correctly returned error: '${(loginWrongPasswordResult as { error: string }).error}'`);
 
 
     // 3. Attempt to login with a non-existent username
@@ -137,7 +129,7 @@ Deno.test("UserAuthenticationConcept", async (t) => {
       "Invalid username or password.",
       "Error message for non-existent username",
     );
-    console.log(`✅ Assertion: Login with non-existent username correctly returned error: '${(loginWrongUsernameResult as { error: string }).error}'`);
+    console.log(`Assertion: Login with non-existent username correctly returned error: '${(loginWrongUsernameResult as { error: string }).error}'`);
   });
 
   await t.step("Scenario 3: Password Change Functionality", async () => {
@@ -154,7 +146,7 @@ Deno.test("UserAuthenticationConcept", async (t) => {
     });
     assertEquals("user" in registerResult, true, "User registration for password change should succeed");
     const userId = (registerResult as { user: ID }).user;
-    console.log(`✅ Registration output: ${JSON.stringify(registerResult)}`);
+    console.log(`Registration output: ${JSON.stringify(registerResult)}`);
 
     // 2. Verify login with the initial password
     console.log(`Attempting to log in with initial password for ${userToChangePass}`);
@@ -165,7 +157,7 @@ Deno.test("UserAuthenticationConcept", async (t) => {
     console.log("Login with initial password output:", loginInitialPass);
     assertEquals("user" in loginInitialPass, true, "Login with initial password should succeed");
     assertEquals((loginInitialPass as { user: ID }).user, userId, "Logged in user ID should match");
-    console.log(`✅ Assertion: User '${userToChangePass}' logged in successfully with initial password.`);
+    console.log(`Assertion: User '${userToChangePass}' logged in successfully with initial password.`);
 
     // 3. Change the user's password using correct old password
     // Action: changePassword(username: String, oldPassword: String, newPassword: String)
@@ -181,7 +173,7 @@ Deno.test("UserAuthenticationConcept", async (t) => {
     assertEquals(typeof changePassResult, "object", "Change password result should be an object");
     assertEquals("error" in changePassResult, false, "Change password should not return an error");
     assertEquals(changePassResult, {} as Empty, "Successful change password should return an empty object");
-    console.log(`✅ Assertion: Password for '${userToChangePass}' changed successfully.`);
+    console.log(`Assertion: Password for '${userToChangePass}' changed successfully.`);
 
     // 4. Attempt to login with the old password (should now fail)
     console.log(`Attempting to log in with OLD password for ${userToChangePass} (expected to fail)`);
@@ -196,7 +188,7 @@ Deno.test("UserAuthenticationConcept", async (t) => {
       "Invalid username or password.",
       "Error message for old password login after change",
     );
-    console.log(`✅ Assertion: Login with old password after change correctly returned error: '${(loginOldPassAfterChange as { error: string }).error}'`);
+    console.log(`Assertion: Login with old password after change correctly returned error: '${(loginOldPassAfterChange as { error: string }).error}'`);
 
     // 5. Login with the new password (should succeed)
     console.log(`Attempting to log in with NEW password for ${userToChangePass}`);
@@ -207,7 +199,7 @@ Deno.test("UserAuthenticationConcept", async (t) => {
     console.log("Login with new password after change output:", loginNewPassAfterChange);
     assertEquals("user" in loginNewPassAfterChange, true, "Login with new password after change should succeed");
     assertEquals((loginNewPassAfterChange as { user: ID }).user, userId, "Logged in user ID should match");
-    console.log(`✅ Assertion: User '${userToChangePass}' logged in successfully with new password.`);
+    console.log(`Assertion: User '${userToChangePass}' logged in successfully with new password.`);
 
     // 6. Attempt to change password with an incorrect old password
     // Action: changePassword(username: String, oldPassword: String, newPassword: String)
@@ -226,7 +218,7 @@ Deno.test("UserAuthenticationConcept", async (t) => {
       "Invalid username or old password.",
       "Error message for changing password with wrong old password",
     );
-    console.log(`✅ Assertion: Change password with wrong old password correctly returned error: '${(changePassWrongOldResult as { error: string }).error}'`);
+    console.log(`Assertion: Change password with wrong old password correctly returned error: '${(changePassWrongOldResult as { error: string }).error}'`);
   });
 
   await t.step("Scenario 4: User Deletion Functionality", async () => {
@@ -243,7 +235,7 @@ Deno.test("UserAuthenticationConcept", async (t) => {
     });
     assertEquals("user" in registerResult, true, "User registration for deletion should succeed");
     const userId = (registerResult as { user: ID }).user;
-    console.log(`✅ Registration output: ${JSON.stringify(registerResult)}`);
+    console.log(`Registration output: ${JSON.stringify(registerResult)}`);
 
     // 2. Confirm user exists by logging in
     console.log(`Attempting to log in user '${userToDelete}' before deletion`);
@@ -254,7 +246,7 @@ Deno.test("UserAuthenticationConcept", async (t) => {
     console.log("Login before deletion output:", loginBeforeDelete);
     assertEquals("user" in loginBeforeDelete, true, "Login before deletion should succeed");
     assertEquals((loginBeforeDelete as { user: ID }).user, userId, "Logged in user ID should match");
-    console.log(`✅ Assertion: User '${userToDelete}' successfully logged in before deletion.`);
+    console.log(`Assertion: User '${userToDelete}' successfully logged in before deletion.`);
 
     // 3. Delete the user with correct credentials
     // Action: deleteUser(username: String, password: String)
@@ -269,7 +261,7 @@ Deno.test("UserAuthenticationConcept", async (t) => {
     assertEquals(typeof deleteResult, "object", "Delete user result should be an object");
     assertEquals("error" in deleteResult, false, "Delete user should not return an error");
     assertEquals(deleteResult, {} as Empty, "Successful delete user should return an empty object");
-    console.log(`✅ Assertion: User '${userToDelete}' deleted successfully.`);
+    console.log(`Assertion: User '${userToDelete}' deleted successfully.`);
 
     // 4. Attempt to login with the deleted user's credentials (should fail)
     console.log(`Attempting to log in user '${userToDelete}' AFTER deletion (expected to fail)`);
@@ -284,7 +276,7 @@ Deno.test("UserAuthenticationConcept", async (t) => {
       "Invalid username or password.",
       "Error message for login after deletion",
     );
-    console.log(`✅ Assertion: Login after deletion correctly returned error: '${(loginAfterDelete as { error: string }).error}'`);
+    console.log(`Assertion: Login after deletion correctly returned error: '${(loginAfterDelete as { error: string }).error}'`);
 
     // 5. Attempt to delete a non-existent user
     // Action: deleteUser(username: String, password: String)
@@ -302,7 +294,7 @@ Deno.test("UserAuthenticationConcept", async (t) => {
       "Invalid username or password, or user does not exist.",
       "Error message for deleting non-existent user",
     );
-    console.log(`✅ Assertion: Deletion of non-existent user correctly returned error: '${(deleteNonExistentResult as { error: string }).error}'`);
+    console.log(`Assertion: Deletion of non-existent user correctly returned error: '${(deleteNonExistentResult as { error: string }).error}'`);
 
     // 6. Attempt to delete a user with incorrect password (even if username exists/existed)
     // Action: deleteUser(username: String, password: String)
@@ -320,7 +312,7 @@ Deno.test("UserAuthenticationConcept", async (t) => {
       "Invalid username or password, or user does not exist.",
       "Error message for deleting with wrong password",
     );
-    console.log(`✅ Assertion: Deletion with wrong password correctly returned error: '${(deleteWrongPassResult as { error: string }).error}'`);
+    console.log(`Assertion: Deletion with wrong password correctly returned error: '${(deleteWrongPassResult as { error: string }).error}'`);
   });
 
   await t.step("Scenario 5: Register, Delete, and Re-register the same user", async () => {
@@ -339,7 +331,7 @@ Deno.test("UserAuthenticationConcept", async (t) => {
     console.log("First registration output:", firstRegisterResult);
     assertEquals("user" in firstRegisterResult, true, "First registration should succeed.");
     const firstUserId = (firstRegisterResult as { user: ID }).user;
-    console.log(`✅ Assertion: User '${userToReregister}' first registered with ID: ${firstUserId}`);
+    console.log(`Assertion: User '${userToReregister}' first registered with ID: ${firstUserId}`);
 
     // 2. Login successfully with first credentials
     console.log(`Attempting to log in '${userToReregister}' with first password.`);
@@ -350,7 +342,7 @@ Deno.test("UserAuthenticationConcept", async (t) => {
     console.log("First login output:", firstLoginResult);
     assertEquals("user" in firstLoginResult, true, "First login should succeed.");
     assertEquals((firstLoginResult as { user: ID }).user, firstUserId, "First logged in user ID should match.");
-    console.log(`✅ Assertion: User '${userToReregister}' successfully logged in with first password.`);
+    console.log(`Assertion: User '${userToReregister}' successfully logged in with first password.`);
 
     // 3. Delete the user
     console.log(`Attempting to delete user '${userToReregister}'.`);
@@ -361,7 +353,7 @@ Deno.test("UserAuthenticationConcept", async (t) => {
     console.log("Deletion output:", deleteResult);
     assertEquals("error" in deleteResult, false, "Deletion of the first registration should succeed.");
     assertEquals(deleteResult, {} as Empty);
-    console.log(`✅ Assertion: User '${userToReregister}' successfully deleted.`);
+    console.log(`Assertion: User '${userToReregister}' successfully deleted.`);
 
     // 4. Attempt to login with the deleted user (should fail)
     console.log(`Attempting to log in '${userToReregister}' AFTER first deletion (expected to fail).`);
@@ -371,7 +363,7 @@ Deno.test("UserAuthenticationConcept", async (t) => {
     });
     console.log("Login after first deletion output:", loginAfterFirstDelete);
     assertEquals("error" in loginAfterFirstDelete, true, "Login after first delete should fail.");
-    console.log(`✅ Assertion: Login after first deletion correctly returned error.`);
+    console.log(`Assertion: Login after first deletion correctly returned error.`);
 
     // 5. Re-register the user with the same username but a new password
     // Requires: a user with the same username doesn't already exist (satisfied, as it was deleted)
@@ -389,7 +381,7 @@ Deno.test("UserAuthenticationConcept", async (t) => {
       true,
       "User ID should be different after re-registration (due to freshID()).",
     );
-    console.log(`✅ Assertion: User '${userToReregister}' re-registered successfully with new ID: ${reRegisteredUserId}. New ID is different from old ID.`);
+    console.log(`Assertion: User '${userToReregister}' re-registered successfully with new ID: ${reRegisteredUserId}. New ID is different from old ID.`);
 
     // 6. Login successfully with the re-registered user's new password
     console.log(`Attempting to log in '${userToReregister}' with new password AFTER re-registration.`);
@@ -404,7 +396,7 @@ Deno.test("UserAuthenticationConcept", async (t) => {
       reRegisteredUserId,
       "Logged in user ID should match the re-registered user ID.",
     );
-    console.log(`✅ Assertion: User '${userToReregister}' successfully logged in with new password after re-registration.`);
+    console.log(`Assertion: User '${userToReregister}' successfully logged in with new password after re-registration.`);
 
     // 7. Attempt to login with the first password (should fail for the re-registered user)
     console.log(`Attempting to log in '${userToReregister}' with the FIRST password AFTER re-registration (expected to fail).`);
@@ -414,7 +406,7 @@ Deno.test("UserAuthenticationConcept", async (t) => {
     });
     console.log("Login with old password after re-registration output:", oldPasswordLoginAttempt);
     assertEquals("error" in oldPasswordLoginAttempt, true, "Login with the first password after re-registration should fail.");
-    console.log(`✅ Assertion: Login with first password after re-registration correctly returned error.`);
+    console.log(`Assertion: Login with first password after re-registration correctly returned error.`);
   });
 
   await client.close(); // Close the MongoDB client connection

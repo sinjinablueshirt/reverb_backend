@@ -1,3 +1,12 @@
+---
+timestamp: 'Thu Oct 16 2025 17:09:52 GMT-0400 (Eastern Daylight Time)'
+parent: '[[../20251016_170952.67ef1173.md]]'
+content_id: fc8df42826423cfb0ca011ff08ef8650542b0dd42d79a9f9ea4414bea47bb530
+---
+
+# file: src/concepts/UserAuthentication/UserAuthenticationConcept.test.ts
+
+```typescript
 import { assertEquals } from "jsr:@std/assert";
 import { testDb } from "@utils/database.ts"; // Utility to get a clean database for testing
 import UserAuthenticationConcept from "./UserAuthenticationConcept.ts";
@@ -132,7 +141,7 @@ Deno.test("UserAuthenticationConcept", async (t) => {
         "Error message for existing username mismatch",
       );
       console.log(
-        `✅ Assertion: Registration with existing username correctly returned error: '${
+        `❌ Assertion: Registration with existing username correctly returned error: '${
           (registerConflictResult as { error: string }).error
         }'`,
       );
@@ -163,7 +172,7 @@ Deno.test("UserAuthenticationConcept", async (t) => {
         "Error message for incorrect password",
       );
       console.log(
-        `✅ Assertion: Login with wrong password correctly returned error: '${
+        `❌ Assertion: Login with wrong password correctly returned error: '${
           (loginWrongPasswordResult as { error: string }).error
         }'`,
       );
@@ -194,7 +203,7 @@ Deno.test("UserAuthenticationConcept", async (t) => {
         "Error message for non-existent username",
       );
       console.log(
-        `✅ Assertion: Login with non-existent username correctly returned error: '${
+        `❌ Assertion: Login with non-existent username correctly returned error: '${
           (loginWrongUsernameResult as { error: string }).error
         }'`,
       );
@@ -299,7 +308,7 @@ Deno.test("UserAuthenticationConcept", async (t) => {
       "Error message for old password login after change",
     );
     console.log(
-      `✅ Assertion: Login with old password after change correctly returned error: '${
+      `❌ Assertion: Login with old password after change correctly returned error: '${
         (loginOldPassAfterChange as { error: string }).error
       }'`,
     );
@@ -357,7 +366,7 @@ Deno.test("UserAuthenticationConcept", async (t) => {
       "Error message for changing password with wrong old password",
     );
     console.log(
-      `✅ Assertion: Change password with wrong old password correctly returned error: '${
+      `❌ Assertion: Change password with wrong old password correctly returned error: '${
         (changePassWrongOldResult as { error: string }).error
       }'`,
     );
@@ -453,7 +462,7 @@ Deno.test("UserAuthenticationConcept", async (t) => {
       "Error message for login after deletion",
     );
     console.log(
-      `✅ Assertion: Login after deletion correctly returned error: '${
+      `❌ Assertion: Login after deletion correctly returned error: '${
         (loginAfterDelete as { error: string }).error
       }'`,
     );
@@ -484,7 +493,7 @@ Deno.test("UserAuthenticationConcept", async (t) => {
       "Error message for deleting non-existent user",
     );
     console.log(
-      `✅ Assertion: Deletion of non-existent user correctly returned error: '${
+      `❌ Assertion: Deletion of non-existent user correctly returned error: '${
         (deleteNonExistentResult as { error: string }).error
       }'`,
     );
@@ -515,7 +524,7 @@ Deno.test("UserAuthenticationConcept", async (t) => {
       "Error message for deleting with wrong password",
     );
     console.log(
-      `✅ Assertion: Deletion with wrong password correctly returned error: '${
+      `❌ Assertion: Deletion with wrong password correctly returned error: '${
         (deleteWrongPassResult as { error: string }).error
       }'`,
     );
@@ -604,7 +613,7 @@ Deno.test("UserAuthenticationConcept", async (t) => {
         "Login after first delete should fail.",
       );
       console.log(
-        `✅ Assertion: Login after first deletion correctly returned error.`,
+        `❌ Assertion: Login after first deletion correctly returned error.`,
       );
 
       // 5. Re-register the user with the same username but a new password
@@ -674,10 +683,16 @@ Deno.test("UserAuthenticationConcept", async (t) => {
         "Login with the first password after re-registration should fail.",
       );
       console.log(
-        `✅ Assertion: Login with first password after re-registration correctly returned error.`,
+        `❌ Assertion: Login with first password after re-registration correctly returned error.`,
       );
     },
   );
 
   await client.close(); // Close the MongoDB client connection
 });
+
+```
+
+<!-- # prompt: create tests that test all methods of the concept. Be sure to make tests that follow the operational principle of the concept specification. Tests should use a sequence of action executions that corresponds to the operational principle, representing the common expected usage of the concept. These sequence is not required to use all the actions; operational principles often do not include a deletion action, for example. Test sequences of action executions that correspond to less common cases: probing interesting corners of the functionality, undoing actions with deletions and cancellations, repeating actions with the same arguments, etc. In some of these scenarios actions may be expected to throw errors. You should have one test sequence for the operational principle, and 3-5 additional interesting scenarios. Every action should be executed successfully in at least one of the scenarios. -->
+
+<!-- # prompt: add console.logs that display helpful messages to the console with action inputs and outputs so that a human reader can make sense of the test execution when it runs in the console -->
