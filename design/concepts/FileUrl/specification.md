@@ -16,6 +16,6 @@
         * **requires**: `filePath` points to a valid file and isn't already uploaded
         * **effects**: saves a new `file` with `filePath` and `owner`. Uploads the contents to an external storage service and obtains a unique `url` to access this file. Saves `url` to the `file` and returns `file`
 
-    * `deleteFile(file: File, user: User, storage: Storage)`
+    * `deleteFile(file: File, user: User)`
         * **requires**: `file` exists and `user` is its `owner`
         * **effects**: removes `file` from the state and makes it so that its `url` isn't able to access it through the `url`
