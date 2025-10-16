@@ -1,3 +1,12 @@
+---
+timestamp: 'Thu Oct 16 2025 17:48:46 GMT-0400 (Eastern Daylight Time)'
+parent: '[[../20251016_174846.f7459fdc.md]]'
+content_id: 5c76602141630bab967feb4674577a6989c22934980c46b85a71d234d1fa1c4f
+---
+
+# response:
+
+```typescript
 import { assertEquals, assertNotEquals } from "jsr:@std/assert";
 import { testDb } from "@utils/database.ts";
 import FileUrlConcept from "./FileUrlConcept.ts";
@@ -150,9 +159,7 @@ Deno.test("FileUrlConcept", async (t) => {
         localFilePath,
         "Stored filePath should match original.",
       );
-      console.log(
-        `✅ Stored filePath matches original: ${storedFile?.filePath}`,
-      );
+      console.log(`✅ Stored filePath matches original: ${storedFile?.filePath}`);
 
       assertEquals(
         storedFile?.owner,
@@ -249,9 +256,7 @@ Deno.test("FileUrlConcept", async (t) => {
         owner: user1,
       });
       if ("error" in firstUploadResult) {
-        console.log(
-          `❌ First upload failed unexpectedly: ${firstUploadResult.error}`,
-        );
+        console.log(`❌ First upload failed unexpectedly: ${firstUploadResult.error}`);
         throw new Error(
           `Expected first upload to succeed, but got error: ${firstUploadResult.error}`,
         );
@@ -344,9 +349,7 @@ Deno.test("FileUrlConcept", async (t) => {
         true,
         "Expected an error for deleting a non-existent file.",
       );
-      console.log(
-        `✅ Delete attempt for non-existent file correctly returned an error.`,
-      );
+      console.log(`✅ Delete attempt for non-existent file correctly returned an error.`);
 
       assertEquals(
         (deleteResult as { error: string }).error,
@@ -406,9 +409,7 @@ Deno.test("FileUrlConcept", async (t) => {
         true,
         "Expected an authorization error for non-owner deletion.",
       );
-      console.log(
-        `✅ Delete attempt by non-owner correctly returned an error.`,
-      );
+      console.log(`✅ Delete attempt by non-owner correctly returned an error.`);
 
       assertEquals(
         (deleteResultByWrongUser as { error: string }).error.includes(
@@ -432,9 +433,7 @@ Deno.test("FileUrlConcept", async (t) => {
         true,
         "File should still exist after unauthorized deletion attempt.",
       );
-      console.log(
-        `✅ File still exists in DB after unauthorized deletion attempt.`,
-      );
+      console.log(`✅ File still exists in DB after unauthorized deletion attempt.`);
 
       // 4. Cleanup by the actual owner
       console.log(
@@ -598,3 +597,5 @@ Deno.test("FileUrlConcept", async (t) => {
   // Close the database client after all tests
   await client.close();
 });
+
+```

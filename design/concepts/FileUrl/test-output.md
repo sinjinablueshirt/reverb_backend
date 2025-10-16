@@ -1,10 +1,3 @@
-[@test-output](concepts/FileUrl/test-output.md)
-
-# prompt: given the test output, add backslashes at the end of each line to make it more readable in markdown
-
-# response:
-
-```markdown
 # FileUrl Test Output:\
 \
 Scenario 1: Operational Principle - Upload a file and verify its state ...\
@@ -100,4 +93,3 @@ Cleanup: Local test files './.test\_files/file\_A.txt', './.test\_files/file\_B.
 \----- output end -----\
 Scenario 5: Uploading multiple files for same and different users ... ok (2s)\
 FileUrlConcept ... ok (5s)\
-```
