@@ -8,7 +8,7 @@ import { freshID } from "@utils/database.ts";
 const PREFIX = "FileUrl" + ".";
 
 // Generic types of this concept
-type File = ID;
+type FileID = ID;
 type User = ID;
 
 /**
@@ -21,7 +21,7 @@ type User = ID;
  *   a `url` of type `string`
  */
 interface FileDocument {
-  _id: File; // The unique identifier for this file record (concept's 'File' type)
+  _id: FileID; // The unique identifier for this file record (concept's 'File' type)
   filePath: string; // The original local file path provided during upload
   owner: User; // The user who uploaded the file (concept's 'User' type)
   url: string; // The public URL to access the file in Google Cloud Storage
@@ -29,7 +29,7 @@ interface FileDocument {
 }
 
 /**
- * concept FileUrl[File, User]
+ * concept FileUrl[User]
  *
  * purpose: to let file information be uploaded and displayed
  *
@@ -72,7 +72,7 @@ export default class FileUrlConcept {
    */
   async uploadFile(
     { filePath, owner }: { filePath: string; owner: User },
-  ): Promise<{ file: File } | { error: string }> {
+  ): Promise<{ file: FileID } | { error: string }> {
     // REQUIREMENT CHECK 1: `filePath` points to a valid file on the local filesystem
     try {
       // Deno.stat checks if the file exists and is accessible.
@@ -100,7 +100,7 @@ export default class FileUrlConcept {
     }
 
     // EFFECT 1: Generate a unique ID for the new file record
-    const newFileId: File = freshID() as File;
+    const newFileId: FileID = freshID();
 
     // Determine a safe and unique object name for GCS
     // This helps prevent collisions and organizes files by owner and concept record ID.
@@ -157,7 +157,7 @@ export default class FileUrlConcept {
    *      rendering its `url` inaccessible.
    */
   async deleteFile(
-    { file, user }: { file: File; user: User },
+    { file, user }: { file: FileID; user: User },
   ): Promise<Empty | { error: string }> {
     // REQUIREMENT CHECK 1: `file` exists
     const fileToDelete = await this.files.findOne({ _id: file });

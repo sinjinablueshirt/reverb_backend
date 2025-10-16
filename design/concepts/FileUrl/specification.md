@@ -1,5 +1,5 @@
 
-# Concept: FileUrl[File, User]
+# Concept: FileUrl[User]
 
 * **purpose**: to let file information be uploaded and displayed
 
