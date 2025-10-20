@@ -144,7 +144,7 @@
 ```
 ---
 
-### POST /api/UserAuthentication/getUserById
+### POST /api/UserAuthentication/_getUserById
 
 **Description:** Retrieves the username for a given user ID.
 
@@ -161,7 +161,7 @@
 }
 ```
 
-**Success Response Body (Action):**
+**Success Response Body (Query):**
 ```json
 {
   "username": "string"

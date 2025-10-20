@@ -126,7 +126,7 @@ export default class UserAuthenticationConcept {
   }
 
   /** Query username by ID */
-  async getUserById(
+  async _getUserById(
     { id }: { id: User },
   ): Promise<{ username: string } | { error: string }> {
     const user = await this.users.findOne({ _id: id });
