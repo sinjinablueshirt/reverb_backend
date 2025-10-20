@@ -124,4 +124,15 @@ export default class UserAuthenticationConcept {
     // Effect: changes the user's password to newPassword. Return empty object on success.
     return {};
   }
+
+  /** Query username by ID */
+  async getUserById(
+    { id }: { id: User },
+  ): Promise<{ username: string } | { error: string }> {
+    const user = await this.users.findOne({ _id: id });
+    if (!user) {
+      return { error: "User not found." };
+    }
+    return { username: user.username };
+  }
 }

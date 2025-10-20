@@ -3,6 +3,9 @@
         "@concepts/": "./src/concepts/",
         "@google/generative-ai": "npm:@google/generative-ai@^0.24.1",
         "@google-cloud/storage": "npm:@google-cloud/storage@^7.0.0",
+        "@hono/hono": "jsr:@hono/hono",
+        "@hono/hono/cors": "jsr:@hono/hono/cors",
+        "@std/": "jsr:@std/",
         "@utils/": "./src/utils/"
     },
     "tasks": {

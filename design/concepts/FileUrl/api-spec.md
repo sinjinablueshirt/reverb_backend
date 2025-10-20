@@ -14,25 +14,66 @@
 
 ## API Endpoints
 
-### POST /api/FileUrl/uploadFile
+### POST /api/FileUrl/requestUpload
 
-**Description:** Saves a new file record, uploads the file contents to Google Cloud Storage, obtains a public URL, and returns the ID of the new file.
+**Description:** Initiates a file upload process by providing a pre-signed URL for direct Google Cloud Storage interaction.
 
 **Requirements:**
-- `filePath` points to a valid file on the local filesystem where the concept is running.
-- A file with this exact `filePath` has not already been uploaded by this `owner`.
+- `fileName` isn't empty.
+- No other file with `fileName` has been uploaded by `owner` (i.e., no confirmed file with this name for this user).
 
 **Effects:**
-- Saves a new `file` record with the provided `filePath` and `owner`.
-- Uploads the contents of the local file specified by `filePath` to Google Cloud Storage.
-- Obtains a unique public `url` to access this file in GCS.
-- Stores this `url` along with other file information in the concept's state (MongoDB).
-- Returns the ID of the newly created `file` record.
+- Generates a unique `gcsObjectName` that embeds a temporary file ID.
+- Creates a pre-signed `uploadUrl` that allows the client to upload directly to GCS for a limited time.
+- Returns both the `uploadUrl` and the `gcsObjectName`.
+- (No database record is created at this stage).
 
 **Request Body:**
 ```json
 {
-  "filePath": "string",
+  "fileName": "string",
+  "owner": "string"
+}
+```
+
+**Success Response Body (Action):**
+```json
+{
+  "uploadUrl": "string",
+  "gcsObjectName": "string"
+}
+```
+
+**Error Response Body:**
+```json
+{
+  "error": "string"
+}
+```
+
+---
+
+### POST /api/FileUrl/confirmUpload
+
+**Description:** Finalizes a file upload, verifying its presence in Google Cloud Storage and recording its metadata in the system.
+
+**Requirements:**
+- An object exists in GCS with `gcsObjectName`.
+- The `owner` and `fileName` provided as arguments match the information encoded within `gcsObjectName`.
+- No `File` record already exists in the database with the file ID embedded in `gcsObjectName`.
+
+**Effects:**
+- Verifies the existence of the uploaded object in GCS.
+- Extracts the unique file ID (`_id`) from `gcsObjectName`.
+- Constructs a permanent public URL for retrieving the file.
+- Saves a new `File` record in the concept's state (MongoDB) with `fileName`, `gcsObjectName`, `owner`, and `url`.
+- Returns the ID of the newly created `File` record.
+
+**Request Body:**
+```json
+{
+  "fileName": "string",
+  "gcsObjectName": "string",
   "owner": "string"
 }
 ```
@@ -50,11 +91,12 @@
   "error": "string"
 }
 ```
+
 ---
 
 ### POST /api/FileUrl/deleteFile
 
-**Description:** Removes a file record from the concept's state and deletes the corresponding content from Google Cloud Storage.
+**Description:** Removes a file's metadata from the system and deletes its corresponding content from Google Cloud Storage.
 
 **Requirements:**
 - `file` exists.
@@ -83,17 +125,18 @@
   "error": "string"
 }
 ```
+
 ---
 
 ### POST /api/FileUrl/_getFilesByUser
 
-**Description:** Obtain all files uploaded by a specific user.
+**Description:** Retrieves metadata for all files owned by a specific user.
 
 **Requirements:**
-- true (No explicit preconditions beyond valid input type)
+- `user` exists (conceptually, or an active user session).
 
 **Effects:**
-- Returns an array of `FileDocument` objects where the `owner` matches the input `user`.
+- Returns an array of `File` documents (metadata) owned by the specified `user`.
 
 **Request Body:**
 ```json
@@ -107,10 +150,10 @@
 [
   {
     "_id": "string",
-    "filePath": "string",
     "owner": "string",
     "url": "string",
-    "gcsObjectName": "string"
+    "gcsObjectName": "string",
+    "fileName": "string"
   }
 ]
 ```
@@ -121,17 +164,18 @@
   "error": "string"
 }
 ```
+
 ---
 
 ### POST /api/FileUrl/_getFileById
 
-**Description:** Obtain the file metadata by its ID.
+**Description:** Fetches metadata for a single file identified by its unique ID.
 
 **Requirements:**
-- true (No explicit preconditions beyond valid input type)
+- none
 
 **Effects:**
-- Returns an array containing the `FileDocument` object for the given `fileId`, or an empty array if no matching file is found.
+- Returns the `File` document (metadata) matching the given `fileId`, or `null` if not found.
 
 **Request Body:**
 ```json
@@ -145,13 +189,14 @@
 [
   {
     "_id": "string",
-    "filePath": "string",
     "owner": "string",
     "url": "string",
-    "gcsObjectName": "string"
+    "gcsObjectName": "string",
+    "fileName": "string"
   }
 ]
 ```
+*(If the file is not found, an empty array `[]` will be returned instead of an array containing a null object.)*
 
 **Error Response Body:**
 ```json
@@ -159,4 +204,5 @@
   "error": "string"
 }
 ```
+
 ---

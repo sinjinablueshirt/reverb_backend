@@ -305,7 +305,7 @@ export default class MusicTaggingConcept {
 
   /** Query: obtain all registries that have at least all the tags in a set of tags */
   async _getRegistriesByTags(
-    tags: string[],
+    { tags }: { tags: string[] },
   ): Promise<Registry[] | { error: string }> {
     if (tags.length === 0) {
       return { error: "Tags array is empty." };
@@ -317,5 +317,42 @@ export default class MusicTaggingConcept {
       .toArray();
 
     return registries;
+  }
+
+  /** Query: obtain a registry from its ID */
+  async _getRegistryById(
+    { id }: { id: RegistryID },
+  ): Promise<Registry | { error: string }> {
+    if (!id) {
+      return { error: "Invalid registry ID." };
+    }
+
+    const registry = await this.db
+      .collection<Registry>("music_registries")
+      .findOne({ _id: id });
+
+    if (!registry) {
+      return { error: "Registry not found." };
+    }
+
+    return registry;
+  }
+
+  /** Query: obtain a registry from its resource  */
+  async _getRegistryByResource(
+    { resource }: { resource: Resource },
+  ): Promise<Registry | { error: string }> {
+    if (!resource) {
+      return { error: "Invalid resource." };
+    }
+    const registry = await this.registries.findOne({ resource });
+
+    console.log("fetched registry by resource:", registry);
+
+    if (!registry) {
+      return { error: "Registry not found." };
+    }
+
+    return registry;
   }
 }

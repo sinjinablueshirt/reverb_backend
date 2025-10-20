@@ -16,13 +16,14 @@
 
 ### POST /api/UserAuthentication/register
 
-**Description:** creates and saves a new user. Returns the user.
+**Description:** Creates and saves a new user, returning the identifier of the created user.
 
 **Requirements:**
-- a user with the same username doesn't already exist
+- A user with the same username doesn't already exist.
 
 **Effects:**
-- creates and saves a new user. Returns the user
+- Creates and saves a new user.
+- Returns the created user's identifier.
 
 **Request Body:**
 ```json
@@ -49,13 +50,13 @@
 
 ### POST /api/UserAuthentication/login
 
-**Description:** returns the user that has a username and password that matches the passed in username and password.
+**Description:** Authenticates a user with the provided username and password, returning the user's identifier if successful.
 
 **Requirements:**
-- a user exists that has a username and password that matches the passed in username and password
+- A user exists that has a username and password that matches the passed in username and password.
 
 **Effects:**
-- returns the user that has a username and password that matches the passed in username and password
+- Returns the user that has a username and password that matches the passed in username and password.
 
 **Request Body:**
 ```json
@@ -82,13 +83,13 @@
 
 ### POST /api/UserAuthentication/deleteUser
 
-**Description:** deletes the user that has a username and password that matches the passed in username and password.
+**Description:** Deletes a user from the system based on their username and password.
 
 **Requirements:**
-- a user exists that has a username and password that matches the passed in username and password
+- A user exists that has a username and password that matches the passed in username and password.
 
 **Effects:**
-- deletes the user that has a username and password that matches the passed in username and password
+- Deletes the user that has a username and password that matches the passed in username and password.
 
 **Request Body:**
 ```json
@@ -113,13 +114,13 @@
 
 ### POST /api/UserAuthentication/changePassword
 
-**Description:** changes the user's password to newPassword.
+**Description:** Changes the password for an existing user after verifying their current credentials.
 
 **Requirements:**
-- a user exists that has a username and password that matches the passed in username and oldPassword
+- A user exists that has a username and password that matches the passed in username and oldPassword.
 
 **Effects:**
-- changes the user's password to newPassword
+- Changes the user's password to newPassword.
 
 **Request Body:**
 ```json
@@ -142,3 +143,34 @@
 }
 ```
 ---
+
+### POST /api/UserAuthentication/getUserById
+
+**Description:** Retrieves the username for a given user ID.
+
+**Requirements:**
+- A user with the given ID must exist.
+
+**Effects:**
+- Returns the username of the user with the given ID.
+
+**Request Body:**
+```json
+{
+  "id": "string"
+}
+```
+
+**Success Response Body (Action):**
+```json
+{
+  "username": "string"
+}
+```
+
+**Error Response Body:**
+```json
+{
+  "error": "string"
+}
+```

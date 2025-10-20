@@ -7,13 +7,13 @@ import { Collection } from "npm:mongodb";
 // Declare collection prefix, use concept name
 const PREFIX = "FileUrl" + ".";
 
-// Define a simple type for the FileDocument interface (copied from concept)
+// Define the FileDocument interface as per the updated concept definition
 interface FileDocument {
   _id: ID;
-  filePath: string;
   owner: ID;
   url: string;
   gcsObjectName: string;
+  fileName: string;
 }
 
 // Temporary directory for test files
@@ -32,7 +32,7 @@ Deno.test.beforeAll(() => {
   if (!Deno.env.get("GCS_BUCKET_NAME")) {
     console.warn(
       "GCS_BUCKET_NAME not set. Setting a placeholder 'test-bucket-name' for testing. " +
-        "Real Google Cloud Storage operations require proper configuration.",
+        "Real Google Cloud Storage operations require proper configuration (e.g., GOOGLE_APPLICATION_CREDENTIALS).",
     );
     Deno.env.set("GCS_BUCKET_NAME", "your-test-gcs-bucket-name");
   }
@@ -105,36 +105,97 @@ Deno.test("FileUrlConcept", async (t) => {
   };
 
   await t.step(
-    "Scenario 1: Operational Principle - Upload a file and verify its state",
+    "Scenario 1: Operational Principle - Request, Upload, Confirm, and Delete a file",
     async () => {
       console.log("\n--- Scenario 1: Operational Principle ---");
 
-      // 1. Create a dummy local file
+      // 1. Prepare a dummy local file for content
+      const fileName = "document_op.txt";
+      const fileContentString =
+        "This is a test document for the operational principle.";
       const localFilePath = await createLocalTestFile(
-        "document_op.txt",
-        "This is a test document for the operational principle.",
+        fileName,
+        fileContentString,
       );
-      const expectedFileName = "document_op.txt";
       console.log(`Setup: Created local file at '${localFilePath}'.`);
 
-      // 2. Perform the upload action
-      console.log(`Action: uploadFile('${localFilePath}', '${user1}')`);
-      const uploadResult = await concept.uploadFile({
-        filePath: localFilePath,
+      const fileContent = await Deno.readFile(localFilePath);
+      const fileData = new Blob([fileContent], { type: "text/plain" });
+
+      // 2. Request an upload URL
+      console.log(
+        `Action: requestUpload({ fileName: '${fileName}', owner: '${user1}' })`,
+      );
+      const requestResult = await concept.requestUpload({
+        fileName,
         owner: user1,
       });
 
-      // Confirm upload was successful
-      if ("error" in uploadResult) {
-        console.log(`❌ Upload failed: ${uploadResult.error}`);
+      if ("error" in requestResult) {
+        console.log(`❌ Request upload failed: ${requestResult.error}`);
         throw new Error(
-          `Expected upload to succeed, but got error: ${uploadResult.error}`,
+          `Expected request upload to succeed, but got error: ${requestResult.error}`,
         );
       }
-      const uploadedFileId = (uploadResult as { file: ID }).file;
-      console.log(`✅ File uploaded successfully with ID: ${uploadedFileId}`);
+      const { uploadUrl, gcsObjectName } = requestResult;
+      console.log(
+        `✅ Request upload successful. Upload URL: ${uploadUrl}, GCS Object Name: ${gcsObjectName}`,
+      );
 
-      // 3. Verify the state change: file information stored in the database
+      // 3. Simulate client uploading the file to GCS using the presigned URL
+      console.log(`Simulating: PUT file content to '${uploadUrl}'`);
+      const uploadResponse = await fetch(uploadUrl, {
+        method: "PUT",
+        headers: { "Content-Type": fileData.type },
+        body: fileData,
+      });
+
+      if (!uploadResponse.ok) {
+        const errorText = await uploadResponse.text();
+        console.log(
+          `❌ Simulated GCS upload failed with status ${uploadResponse.status}: ${errorText}`,
+        );
+        console.warn(
+          "NOTE: If GCS_BUCKET_NAME is not a real bucket or authentication is missing, this step will fail.",
+        );
+        // We'll allow confirmUpload to handle the missing GCS object gracefully
+      } else {
+        console.log(
+          `✅ Simulated GCS upload succeeded with status ${uploadResponse.status}.`,
+        );
+      }
+
+      // 4. Confirm the upload in the system
+      console.log(
+        `Action: confirmUpload({ fileName: '${fileName}', gcsObjectName: '${gcsObjectName}', owner: '${user1}' })`,
+      );
+      const confirmResult = await concept.confirmUpload(
+        { fileName, gcsObjectName, owner: user1 },
+      );
+
+      if ("error" in confirmResult) {
+        console.log(`❌ Confirm upload failed: ${confirmResult.error}`);
+        // If the GCS_BUCKET_NAME is a placeholder or not properly configured,
+        // confirmUpload will fail because gcsFile.exists() will be false.
+        // We catch this here as an expected outcome for misconfigured GCS,
+        // but for a fully passing test, GCS would need to be real.
+        if (
+          confirmResult.error.includes("does not exist in storage") ||
+          confirmResult.error.includes("Failed to confirm upload")
+        ) {
+          console.warn(
+            "Expected failure due to GCS object not existing (likely GCS_BUCKET_NAME or auth not fully configured). " +
+              "This confirms the requirement 'An object exists in GCS' is being checked.",
+          );
+        }
+        throw new Error(
+          `Expected confirm upload to succeed (assuming proper GCS setup), but got error: ${confirmResult.error}`,
+        );
+      }
+      const uploadedFileId = (confirmResult as { file: ID }).file;
+      console.log(`✅ File confirmed successfully with ID: ${uploadedFileId}`);
+
+      // 5. Verify the state change: file information stored in the database
       const storedFile = await filesCollection.findOne({ _id: uploadedFileId });
       assertEquals(
         storedFile !== null,
@@ -146,12 +207,12 @@ Deno.test("FileUrlConcept", async (t) => {
       );
 
       assertEquals(
-        storedFile?.filePath,
-        localFilePath,
-        "Stored filePath should match original.",
+        storedFile?.fileName,
+        fileName,
+        "Stored fileName should match original.",
       );
       console.log(
-        `✅ Stored filePath matches original: ${storedFile?.filePath}`,
+        `✅ Stored fileName matches original: ${storedFile?.fileName}`,
       );
 
       assertEquals(
@@ -162,41 +223,35 @@ Deno.test("FileUrlConcept", async (t) => {
       console.log(`✅ Stored owner matches: ${storedFile?.owner}`);
 
       assertNotEquals(storedFile?.url, undefined, "File should have a URL.");
-      console.log(`✅ File has a URL (not undefined).`);
-
       assertNotEquals(storedFile?.url, "", "File URL should not be empty.");
-      console.log(`✅ File URL is not empty.`);
+      console.log(`✅ File has a URL: ${storedFile?.url}`);
 
       assertNotEquals(
         storedFile?.gcsObjectName,
         undefined,
         "GCS object name should be stored.",
       );
-      console.log(`✅ GCS object name is stored (not undefined).`);
-
       assertNotEquals(
         storedFile?.gcsObjectName,
         "",
         "GCS object name should not be empty.",
       );
-      console.log(`✅ GCS object name is not empty.`);
-
       assertEquals(
-        storedFile?.gcsObjectName.includes(
-          `${user1}/${uploadedFileId}/${expectedFileName}`,
-        ),
-        true,
-        "GCS object name should follow the expected pattern (owner/fileId/filename).",
+        storedFile?.gcsObjectName,
+        gcsObjectName,
+        "Stored GCS object name should match the generated one.",
       );
       console.log(
-        `✅ GCS object name follows expected pattern: ${storedFile?.gcsObjectName}`,
+        `✅ Stored GCS object name matches generated: ${storedFile?.gcsObjectName}`,
       );
       console.log(
         `Effect: File details verified in DB. URL: ${storedFile?.url}`,
       );
 
-      // 4. Cleanup: Delete the uploaded file and verify its removal
-      console.log(`Action: deleteFile('${uploadedFileId}', '${user1}')`);
+      // 6. Cleanup: Delete the uploaded file and verify its removal
+      console.log(
+        `Action: deleteFile({ file: '${uploadedFileId}', user: '${user1}' })`,
+      );
       const deleteResult = await concept.deleteFile({
         file: uploadedFileId,
         user: user1,
@@ -204,7 +259,9 @@ Deno.test("FileUrlConcept", async (t) => {
       assertEquals(
         "error" in deleteResult,
         false,
-        `Expected delete to succeed, but got error: ${deleteResult.error}`,
+        `Expected delete to succeed, but got error: ${
+          (deleteResult as { error: string }).error
+        }`,
       );
       console.log(`✅ File deletion by owner succeeded.`);
       console.log(`Effect: File with ID ${uploadedFileId} deleted.`);
@@ -223,77 +280,102 @@ Deno.test("FileUrlConcept", async (t) => {
       // Remove the local test file
       await removeLocalTestFile(localFilePath);
       console.log(`Cleanup: Local test file '${localFilePath}' removed.`);
+
+      await uploadResponse.text();
     },
   );
 
   await t.step(
-    "Scenario 2: Uploading an already uploaded file for the same owner (should fail)",
+    "Scenario 2: Requesting upload for an already uploaded file for the same owner (should fail)",
     async () => {
       console.log(
-        "\n--- Scenario 2: Uploading duplicate file for same owner (expected to fail) ---",
+        "\n--- Scenario 2: Requesting upload for duplicate file for same owner (expected to fail) ---",
       );
 
-      // 1. Create a dummy local file
+      // 1. Prepare a dummy local file
+      const fileName = "duplicate_test.txt";
+      const fileContentString = "Content for duplicate test.";
       const localFilePath = await createLocalTestFile(
-        "duplicate_test.txt",
-        "Content for duplicate test.",
+        fileName,
+        fileContentString,
       );
       console.log(`Setup: Created local file at '${localFilePath}'.`);
+      const fileContent = await Deno.readFile(localFilePath);
+      const fileData = new Blob([fileContent], { type: "text/plain" });
 
-      // 2. Perform the first, successful upload
+      // 2. Perform the first, successful upload sequence
       console.log(
-        `Action: uploadFile('${localFilePath}', '${user1}') - First upload`,
+        `Action: First upload sequence for fileName: '${fileName}', owner: '${user1}'`,
       );
-      const firstUploadResult = await concept.uploadFile({
-        filePath: localFilePath,
+      const requestResult1 = await concept.requestUpload({
+        fileName,
         owner: user1,
       });
-      if ("error" in firstUploadResult) {
-        console.log(
-          `❌ First upload failed unexpectedly: ${firstUploadResult.error}`,
-        );
+      if ("error" in requestResult1) {
         throw new Error(
-          `Expected first upload to succeed, but got error: ${firstUploadResult.error}`,
+          `Expected first request upload to succeed, but got error: ${requestResult1.error}`,
         );
       }
-      const uploadedFileId = (firstUploadResult as { file: ID }).file;
+      const { uploadUrl: uploadUrl1, gcsObjectName: gcsObjectName1 } =
+        requestResult1;
+
+      const uploadResponse = await fetch(uploadUrl1, {
+        method: "PUT",
+        body: fileData,
+        headers: { "Content-Type": fileData.type },
+      });
+      if (!uploadResponse.ok) console.warn("Simulated GCS upload 1 failed.");
+
+      const confirmResult1 = await concept.confirmUpload({
+        fileName,
+        gcsObjectName: gcsObjectName1,
+        owner: user1,
+      });
+      if ("error" in confirmResult1) {
+        throw new Error(
+          `Expected first confirm upload to succeed, but got error: ${confirmResult1.error}`,
+        );
+      }
+      const uploadedFileId = (confirmResult1 as { file: ID }).file;
       console.log(
-        `✅ First upload successful with ID: ${uploadedFileId}`,
+        `✅ First upload sequence successful with ID: ${uploadedFileId}`,
       );
 
-      // 3. Attempt to upload the *same* file with the *same* owner again
+      // 3. Attempt to request an upload for the *same* fileName with the *same* owner again
       console.log(
-        `Action: uploadFile('${localFilePath}', '${user1}') - Second upload (expected to fail)`,
+        `Action: requestUpload({ fileName: '${fileName}', owner: '${user1}' }) - Second request (expected to fail)`,
       );
-      const secondUploadResult = await concept.uploadFile({
-        filePath: localFilePath,
+      const requestResult2 = await concept.requestUpload({
+        fileName,
         owner: user1,
       });
 
-      // Confirm it failed as required
+      // Confirm it failed as required by 'requestUpload'
       assertEquals(
-        "error" in secondUploadResult,
+        "error" in requestResult2,
         true,
-        "Expected an error for duplicate upload.",
-      );
-      console.log(`✅ Second upload attempt correctly returned an error.`);
-
-      assertEquals(
-        (secondUploadResult as { error: string }).error.includes(
-          `File '${localFilePath}' has already been uploaded by owner '${user1}'`,
-        ),
-        true,
-        "Expected an error message indicating a duplicate file for the same owner.",
+        "Expected an error for requesting upload of a duplicate file.",
       );
       console.log(
-        `✅ Error message indicates duplicate upload for same owner: ${
-          (secondUploadResult as { error: string }).error
+        `✅ Second request upload attempt correctly returned an error.`,
+      );
+
+      assertEquals(
+        (requestResult2 as { error: string }).error.includes(
+          `A file named '${fileName}' has already been uploaded by owner '${user1}'`,
+        ),
+        true,
+        "Expected an error message indicating a duplicate file for the same owner at request stage.",
+      );
+      console.log(
+        `✅ Error message indicates duplicate upload for same owner at request stage: ${
+          (requestResult2 as { error: string }).error
         }`,
       );
 
-      // Verify no new file record was created
+      // Verify no new file record was created (check by fileName)
       const count = await filesCollection.countDocuments({
-        filePath: localFilePath,
+        fileName: fileName,
         owner: user1,
       });
       assertEquals(
@@ -305,7 +387,7 @@ Deno.test("FileUrlConcept", async (t) => {
 
       // 4. Cleanup: Delete the successfully uploaded file
       console.log(
-        `Action: deleteFile('${uploadedFileId}', '${user1}') (cleanup)`,
+        `Action: deleteFile({ file: '${uploadedFileId}', user: '${user1}' }) (cleanup)`,
       );
       const deleteResult = await concept.deleteFile({
         file: uploadedFileId,
@@ -314,11 +396,15 @@ Deno.test("FileUrlConcept", async (t) => {
       assertEquals(
         "error" in deleteResult,
         false,
-        `Expected cleanup delete to succeed, but got error: ${deleteResult.error}`,
+        `Expected cleanup delete to succeed, but got error: ${
+          (deleteResult as { error: string }).error
+        }`,
       );
       console.log(`✅ Cleanup deletion by owner succeeded.`);
       await removeLocalTestFile(localFilePath);
       console.log(`Cleanup: Local test file '${localFilePath}' removed.`);
+
+      await uploadResponse.text();
     },
   );
 
@@ -331,7 +417,7 @@ Deno.test("FileUrlConcept", async (t) => {
 
       const nonExistentFileId = "nonExistent123" as ID;
       console.log(
-        `Action: deleteFile('${nonExistentFileId}', '${user1}') (expected to fail)`,
+        `Action: deleteFile({ file: '${nonExistentFileId}', user: '${user1}' }) (expected to fail)`,
       );
       const deleteResult = await concept.deleteFile({
         file: nonExistentFileId,
@@ -369,35 +455,56 @@ Deno.test("FileUrlConcept", async (t) => {
         "\n--- Scenario 4: Deleting a file by a non-owner (expected to fail) ---",
       );
 
-      // 1. Create a dummy local file
+      // 1. Prepare a dummy local file
+      const fileName = "owner_delete.txt";
+      const fileContentString = "Content for owner delete test.";
       const localFilePath = await createLocalTestFile(
-        "owner_delete.txt",
-        "Content for owner delete test.",
+        fileName,
+        fileContentString,
       );
       console.log(`Setup: Created local file at '${localFilePath}'.`);
+      const fileContent = await Deno.readFile(localFilePath);
+      const fileData = new Blob([fileContent], { type: "text/plain" });
 
-      // 2. User 1 uploads a file successfully
-      console.log(`Action: uploadFile('${localFilePath}', '${user1}')`);
-      const uploadResult = await concept.uploadFile({
-        filePath: localFilePath,
+      // 2. User 1 performs the upload sequence successfully
+      console.log(
+        `Action: Upload sequence for fileName: '${fileName}', owner: '${user1}'`,
+      );
+      const requestResult = await concept.requestUpload({
+        fileName,
         owner: user1,
       });
-      if ("error" in uploadResult) {
-        console.log(`❌ Upload failed unexpectedly: ${uploadResult.error}`);
-        throw new Error(
-          `Expected first upload to succeed, but got error: ${uploadResult.error}`,
-        );
+      if ("error" in requestResult) {
+        throw new Error(`Request failed: ${requestResult.error}`);
       }
-      const uploadedFileId = (uploadResult as { file: ID }).file;
+      const { uploadUrl, gcsObjectName } = requestResult;
+      const uploadResponse: Response = await fetch(uploadUrl, {
+        method: "PUT",
+        body: fileData,
+        headers: { "Content-Type": fileData.type },
+      });
+      if (!uploadResponse.ok) {
+        console.warn("Simulated GCS upload for owner_delete.txt failed.");
+      }
+
+      const confirmResult = await concept.confirmUpload({
+        fileName,
+        gcsObjectName,
+        owner: user1,
+      });
+      if ("error" in confirmResult) {
+        throw new Error(`Confirm failed: ${confirmResult.error}`);
+      }
+      const uploadedFileId = (confirmResult as { file: ID }).file;
       console.log(`✅ File uploaded by ${user1} with ID: ${uploadedFileId}`);
 
       // 3. User 2 (not the owner) attempts to delete the file
       console.log(
-        `Action: deleteFile('${uploadedFileId}', '${user2}') (expected to fail for non-owner)`,
+        `Action: deleteFile({ file: '${uploadedFileId}', user: '${user2}' }) (expected to fail for non-owner)`,
       );
       const deleteResultByWrongUser = await concept.deleteFile({
         file: uploadedFileId,
-        user: user2, // user2 is not the owner
+        user: user2,
       });
 
       // Confirm it failed as required
@@ -438,7 +545,7 @@ Deno.test("FileUrlConcept", async (t) => {
 
       // 4. Cleanup by the actual owner
       console.log(
-        `Action: deleteFile('${uploadedFileId}', '${user1}') (cleanup by owner)`,
+        `Action: deleteFile({ file: '${uploadedFileId}', user: '${user1}' }) (cleanup by owner)`,
       );
       const cleanupResult = await concept.deleteFile({
         file: uploadedFileId,
@@ -447,7 +554,9 @@ Deno.test("FileUrlConcept", async (t) => {
       assertEquals(
         "error" in cleanupResult,
         false,
-        `Expected cleanup delete to succeed, but got error: ${cleanupResult.error}`,
+        `Expected cleanup delete to succeed, but got error: ${
+          (cleanupResult as { error: string }).error
+        }`,
       );
       console.log(`✅ Cleanup deletion by owner succeeded.`);
       console.log(
@@ -455,6 +564,8 @@ Deno.test("FileUrlConcept", async (t) => {
       );
       await removeLocalTestFile(localFilePath);
       console.log(`Cleanup: Local test file '${localFilePath}' removed.`);
+
+      await uploadResponse.text();
     },
   );
 
@@ -465,71 +576,92 @@ Deno.test("FileUrlConcept", async (t) => {
         "\n--- Scenario 5: Uploading multiple files for same and different users ---",
       );
 
-      // 1. Create multiple dummy local files
-      const filePathA = await createLocalTestFile(
-        "file_A.txt",
+      // Helper function for a full upload sequence
+      const performUploadSequence = async (
+        _fileName: string,
+        _fileContent: string,
+        _owner: ID,
+      ): Promise<ID> => {
+        const _localFilePath = await createLocalTestFile(
+          _fileName,
+          _fileContent,
+        );
+        const _fileData = new Blob([await Deno.readFile(_localFilePath)], {
+          type: "text/plain",
+        });
+
+        const reqResult = await concept.requestUpload({
+          fileName: _fileName,
+          owner: _owner,
+        });
+        if ("error" in reqResult) {
+          throw new Error(
+            `Request upload for '${_fileName}' by '${_owner}' failed: ${reqResult.error}`,
+          );
+        }
+        const { uploadUrl, gcsObjectName } = reqResult;
+
+        const uploadResponse = await fetch(uploadUrl, {
+          method: "PUT",
+          body: _fileData,
+          headers: { "Content-Type": _fileData.type },
+        });
+        if (!uploadResponse.ok) {
+          console.warn(`Simulated GCS upload for '${_fileName}' failed.`);
+        }
+
+        const confResult = await concept.confirmUpload({
+          fileName: _fileName,
+          gcsObjectName,
+          owner: _owner,
+        });
+        if ("error" in confResult) {
+          throw new Error(
+            `Confirm upload for '${_fileName}' by '${_owner}' failed: ${confResult.error}`,
+          );
+        }
+        console.log(
+          `✅ File '${_fileName}' uploaded and confirmed successfully by '${_owner}' with ID: ${confResult.file}`,
+        );
+        await uploadResponse.text();
+        return confResult.file;
+      };
+
+      // 1. Create multiple dummy local files and perform uploads
+      const fileNameA = "file_A.txt";
+      const fileIdA = await performUploadSequence(
+        fileNameA,
         "Content A for user1",
+        user1,
       );
-      const filePathB = await createLocalTestFile(
-        "file_B.txt",
+
+      const fileNameB = "file_B.txt";
+      const fileIdB = await performUploadSequence(
+        fileNameB,
         "Content B for user1",
+        user1,
       );
-      const filePathC = await createLocalTestFile(
-        "file_C.txt",
+
+      const fileNameC = "file_C.txt";
+      const fileIdC = await performUploadSequence(
+        fileNameC,
         "Content C for user2",
-      );
-      console.log(
-        `Setup: Created local files at '${filePathA}', '${filePathB}', '${filePathC}'.`,
+        user2,
       );
 
-      // 2. User 1 uploads two files
-      console.log(`Action: uploadFile('${filePathA}', '${user1}')`);
-      const uploadResultA = await concept.uploadFile({
-        filePath: filePathA,
-        owner: user1,
+      // 2. Verify all files exist in DB with correct owners (check using fileName)
+      const storedFileA = await filesCollection.findOne({
+        _id: fileIdA,
+        fileName: fileNameA,
       });
-      if ("error" in uploadResultA) {
-        console.log(`❌ Upload A failed unexpectedly: ${uploadResultA.error}`);
-        throw new Error(
-          `Upload A failed: ${uploadResultA.error}`,
-        );
-      }
-      const fileIdA = (uploadResultA as { file: ID }).file;
-      console.log(`✅ File A uploaded successfully with ID: ${fileIdA}`);
-
-      console.log(`Action: uploadFile('${filePathB}', '${user1}')`);
-      const uploadResultB = await concept.uploadFile({
-        filePath: filePathB,
-        owner: user1,
+      const storedFileB = await filesCollection.findOne({
+        _id: fileIdB,
+        fileName: fileNameB,
       });
-      if ("error" in uploadResultB) {
-        console.log(`❌ Upload B failed unexpectedly: ${uploadResultB.error}`);
-        throw new Error(
-          `Upload B failed: ${uploadResultB.error}`,
-        );
-      }
-      const fileIdB = (uploadResultB as { file: ID }).file;
-      console.log(`✅ File B uploaded successfully with ID: ${fileIdB}`);
-
-      // 3. User 2 uploads one file
-      console.log(`Action: uploadFile('${filePathC}', '${user2}')`);
-      const uploadResultC = await concept.uploadFile({
-        filePath: filePathC,
-        owner: user2,
+      const storedFileC = await filesCollection.findOne({
+        _id: fileIdC,
+        fileName: fileNameC,
       });
-      if ("error" in uploadResultC) {
-        console.log(`❌ Upload C failed unexpectedly: ${uploadResultC.error}`);
-        throw new Error(
-          `Upload B failed: ${uploadResultC.error}`,
-        );
-      }
-      const fileIdC = (uploadResultC as { file: ID }).file;
-      console.log(`✅ File C uploaded successfully with ID: ${fileIdC}`);
-
-      // 4. Verify all files exist in DB with correct owners
-      const storedFileA = await filesCollection.findOne({ _id: fileIdA });
-      const storedFileB = await filesCollection.findOne({ _id: fileIdB });
-      const storedFileC = await filesCollection.findOne({ _id: fileIdC });
 
       assertEquals(
         storedFileA?.owner,
@@ -561,20 +693,35 @@ Deno.test("FileUrlConcept", async (t) => {
         `✅ Total number of files in DB is 3, as expected.`,
       );
       console.log(
-        "Effect: All files verified to exist with correct owners in DB.",
+        "Effect: All files verified to exist with correct owners and file names in DB.",
       );
 
-      // 5. Cleanup: Delete all uploaded files by their respective owners
-      console.log(`Action: deleteFile('${fileIdA}', '${user1}') (cleanup)`);
-      await concept.deleteFile({ file: fileIdA, user: user1 });
+      // 3. Cleanup: Delete all uploaded files by their respective owners
+      console.log(
+        `Action: deleteFile({ file: '${fileIdA}', user: '${user1}' }) (cleanup)`,
+      );
+      await concept.deleteFile({
+        file: fileIdA,
+        user: user1,
+      });
       console.log(`✅ File A cleaned up.`);
 
-      console.log(`Action: deleteFile('${fileIdB}', '${user1}') (cleanup)`);
-      await concept.deleteFile({ file: fileIdB, user: user1 });
+      console.log(
+        `Action: deleteFile({ file: '${fileIdB}', user: '${user1}' }) (cleanup)`,
+      );
+      await concept.deleteFile({
+        file: fileIdB,
+        user: user1,
+      });
       console.log(`✅ File B cleaned up.`);
 
-      console.log(`Action: deleteFile('${fileIdC}', '${user2}') (cleanup)`);
-      await concept.deleteFile({ file: fileIdC, user: user2 });
+      console.log(
+        `Action: deleteFile({ file: '${fileIdC}', user: '${user2}' }) (cleanup)`,
+      );
+      await concept.deleteFile({
+        file: fileIdC,
+        user: user2,
+      });
       console.log(`✅ File C cleaned up.`);
       console.log("Effect: All files cleaned up.");
 
@@ -586,11 +733,11 @@ Deno.test("FileUrlConcept", async (t) => {
       );
       console.log(`✅ All files are confirmed to be removed from DB.`);
 
-      await removeLocalTestFile(filePathA);
-      await removeLocalTestFile(filePathB);
-      await removeLocalTestFile(filePathC);
+      await removeLocalTestFile(`${TEST_FILES_DIR}/${fileNameA}`);
+      await removeLocalTestFile(`${TEST_FILES_DIR}/${fileNameB}`);
+      await removeLocalTestFile(`${TEST_FILES_DIR}/${fileNameC}`);
       console.log(
-        `Cleanup: Local test files '${filePathA}', '${filePathB}', '${filePathC}' removed.`,
+        `Cleanup: Local test files for ${fileNameA}, ${fileNameB}, ${fileNameC} removed.`,
       );
     },
   );

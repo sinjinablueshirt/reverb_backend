@@ -162,7 +162,7 @@ export default class CommentConcept {
 
   /** Query: obtain all comments for a specific resource */
   async _getCommentsByResource(
-    resource: Resource,
+    { resource }: { resource: Resource },
   ): Promise<CommentsCollection[] | { error: string }> {
     // Check if the resource is registered
     const existingResource = await this.resources.findOne({ _id: resource });
@@ -180,7 +180,7 @@ export default class CommentConcept {
 
   /** Query: obtain the comment by its ID */
   async _getCommentById(
-    commentId: CommentID,
+    { commentId }: { commentId: CommentID },
   ): Promise<CommentsCollection | null> {
     return await this.comments.findOne({ _id: commentId });
   }

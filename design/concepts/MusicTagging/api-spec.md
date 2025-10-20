@@ -8,7 +8,7 @@
 
 # API Specification: MusicTagging Concept
 
-**Purpose:** Facilitate the organization and discovery of music resources by associating them with descriptive tags, including AI-driven tag suggestions.
+**Purpose:** Manage musical resources by associating them with descriptions and automatically suggested or manually added tags, enabling search and organization.
 
 ---
 
@@ -16,7 +16,7 @@
 
 ### POST /api/MusicTagging/registerResource
 
-**Description:** Registers a new music resource with a description and initializes it with an empty set of tags.
+**Description:** Registers a new musical resource with a description in the system.
 
 **Requirements:**
 - No `Registry` entry exists in the state for the given `resource`.
@@ -28,7 +28,7 @@
 **Request Body:**
 ```json
 {
-  "resource": "ID",
+  "resource": "string",
   "description": "string"
 }
 ```
@@ -36,7 +36,7 @@
 **Success Response Body (Action):**
 ```json
 {
-  "registry": "ID"
+  "registry": "string"
 }
 ```
 
@@ -51,7 +51,7 @@
 
 ### POST /api/MusicTagging/addTag
 
-**Description:** Adds a new tag to an existing music resource registry.
+**Description:** Adds a specific tag to an existing musical resource registry.
 
 **Requirements:**
 - `registry` exists in the state.
@@ -63,7 +63,7 @@
 **Request Body:**
 ```json
 {
-  "registry": "ID",
+  "registry": "string",
   "tag": "string"
 }
 ```
@@ -84,7 +84,7 @@
 
 ### POST /api/MusicTagging/removeTag
 
-**Description:** Removes a tag from an existing music resource registry.
+**Description:** Removes a specific tag from an existing musical resource registry.
 
 **Requirements:**
 - `registry` exists in the state.
@@ -96,7 +96,7 @@
 **Request Body:**
 ```json
 {
-  "registry": "ID",
+  "registry": "string",
   "tag": "string"
 }
 ```
@@ -117,7 +117,7 @@
 
 ### POST /api/MusicTagging/deleteRegistry
 
-**Description:** Deletes a music resource registry and all its associated data.
+**Description:** Deletes an existing musical resource registry and all its associated data.
 
 **Requirements:**
 - `registry` exists in the state.
@@ -128,7 +128,7 @@
 **Request Body:**
 ```json
 {
-  "registry": "ID"
+  "registry": "string"
 }
 ```
 
@@ -148,7 +148,7 @@
 
 ### POST /api/MusicTagging/suggestTags
 
-**Description:** Uses an LLM to create a set of tags that fit the registry's description in a musical context and adds them to the registry's tags.
+**Description:** Uses an external LLM to suggest relevant musical tags for a resource's description and adds them to its registry.
 
 **Requirements:**
 - `registry` exists in the state.
@@ -160,7 +160,7 @@
 **Request Body:**
 ```json
 {
-  "registry": "ID",
+  "registry": "string",
   "llm": "object"
 }
 ```
@@ -179,15 +179,15 @@
 
 ---
 
-### POST /api/MusicTagging/getRegistriesByTags
+### POST /api/MusicTagging/_getRegistriesByTags
 
-**Description:** Obtains all registries that have at least all the tags in a given set of tags.
+**Description:** Retrieves all musical resource registries that contain at least all the tags in a given set.
 
 **Requirements:**
-- The input `tags` array must not be empty.
+- The `tags` array in the request body must not be empty.
 
 **Effects:**
-- Returns a list of `Registry` objects whose `tags` set contains all the specified input tags.
+- Returns a set of `Registry` objects where each `Registry` has at least all the tags specified in the input `tags` array.
 
 **Request Body:**
 ```json
@@ -200,8 +200,8 @@
 ```json
 [
   {
-    "_id": "ID",
-    "resource": "ID",
+    "_id": "string",
+    "resource": "string",
     "description": "string",
     "tags": ["string"]
   }
@@ -214,4 +214,81 @@
   "error": "string"
 }
 ```
+
 ---
+
+### POST /api/MusicTagging/_getRegistryById
+
+**Description:** Retrieves a single musical resource registry by its unique identifier.
+
+**Requirements:**
+- The `id` in the request body must be a valid registry identifier.
+- A `Registry` with the given `id` must exist in the state.
+
+**Effects:**
+- Returns the `Registry` object identified by the input `id`.
+
+**Request Body:**
+```json
+{
+  "id": "string"
+}
+```
+
+**Success Response Body (Query):**
+```json
+[
+  {
+    "_id": "string",
+    "resource": "string",
+    "description": "string",
+    "tags": ["string"]
+  }
+]
+```
+
+**Error Response Body:**
+```json
+{
+  "error": "string"
+}
+```
+
+---
+
+### POST /api/MusicTagging/_getRegistryByResource
+
+**Description:** Retrieves a single musical resource registry by its associated resource identifier.
+
+**Requirements:**
+- The `resource` in the request body must be a valid resource identifier.
+- A `Registry` entry associated with the given `resource` must exist in the state.
+
+**Effects:**
+- Returns the `Registry` object associated with the input `resource`.
+
+**Request Body:**
+```json
+{
+  "resource": "string"
+}
+```
+
+**Success Response Body (Query):**
+```json
+[
+  {
+    "_id": "string",
+    "resource": "string",
+    "description": "string",
+    "tags": ["string"]
+  }
+]
+```
+
+**Error Response Body:**
+```json
+{
+  "error": "string"
+}
+```
