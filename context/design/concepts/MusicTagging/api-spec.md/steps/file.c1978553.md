@@ -1,13 +1,22 @@
+---
+timestamp: 'Tue Oct 21 2025 19:44:45 GMT-0400 (Eastern Daylight Time)'
+parent: '[[../20251021_194445.ab8630d6.md]]'
+content_id: c19785536b28ece91c445fe0e599612d883a28003c246537c24f32c665f3f34a
+---
+
+# file: src/concepts/MusicTagging/MusicTaggingConcept.ts
+
+```typescript
 import { Collection, Db } from "npm:mongodb";
 import { Empty, ID } from "@utils/types.ts";
 import { freshID } from "@utils/database.ts";
-import { GeminiLLM } from "@utils/gemini-llm.ts";
 
 // Declare collection prefix, use concept name
 const PREFIX = "MusicTagging" + ".";
 
 // Generic types of this concept
 type Resource = ID;
+type GeminiLLM = any; // Placeholder for the LLM type, as it's an external dependency
 type RegistryID = ID; // Type for the identifier of a Registry entry
 
 /**
@@ -140,25 +149,24 @@ export default class MusicTaggingConcept {
     return {};
   }
   /**
-   * async suggestTags(description: string, existingTags: string[])
+   * async suggestTags(description: string, existingTags: string[], llm: GeminiLLM)
    *
    * @requires `description` is not empty
-   * @effects uses an internal llm to create a set of tags that fit the `description`
+   * @effects uses `llm` to create a set of tags that fit the `description`
    * in a musical context and returns this set. Tags already present in
    * `existingTags` are not suggested.
    */
   async suggestTags(
-    { description, existingTags }: {
+    { description, existingTags, llm }: {
       description: string;
       existingTags: string[];
+      llm: GeminiLLM;
     },
   ): Promise<{ tags: string[] } | { error: string }> {
     // Check precondition: description is not empty
     if (!description || description.trim().length === 0) {
       return { error: "Description is required." };
     }
-
-    const llm = this.loadLLM(); // Initialize LLM instance
 
     try {
       // Create a prompt based on the resource's description and existing tags
@@ -358,23 +366,6 @@ export default class MusicTaggingConcept {
 
     return registry;
   }
-
-  /**
-   * Load configuration from .env
-   */
-  private loadLLM(): GeminiLLM {
-    try {
-      const apiKey = Deno.env.get("GEMINI_API_KEY");
-      if (!apiKey) {
-        throw new Error("GEMINI_API_KEY not found in environment variables.");
-      }
-      return new GeminiLLM(apiKey);
-    } catch (error) {
-      console.error(
-        "❌ Error loading .env. Please ensure GEMINI_API_KEY is set.",
-      );
-      console.error("Error details:", (error as Error).message);
-      Deno.exit(1);
-    }
-  }
 }
+
+```

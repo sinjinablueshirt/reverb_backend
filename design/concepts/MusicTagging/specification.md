@@ -1,5 +1,5 @@
 
-# concept: MusicTagging[Resource, GeminiLLM]
+# concept: MusicTagging[Resource]
 
 * **purpose**: to classify resources with musical descriptors so they can be easily retrieved later.
 
@@ -28,6 +28,6 @@
         *   **requires** `registry` exists in the state.
         *   **effects** The specified `registry` entry and all its associated data are removed from the state.
 
-    * `async suggestTags(registry: Registry, llm: GeminiLLM)`
-        * **requires** `registry` exists in the state.
-        * **effects** uses `llm` to create a set of tags that fit the `registry.description` in a musical context and adds them to `registry.tags`. Tags already present in `registry.tags` are not re-added.
+    * `async suggestTags(description: string, existingTags: list of string): (tags: list of string)`
+        * **requires** `description` is not empty
+        * **effects** uses an llm to create a set of tags that fit the `description` in a musical context and returns this set. Tags already present in `existingTags` are not suggested.

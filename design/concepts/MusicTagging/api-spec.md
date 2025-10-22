@@ -292,3 +292,48 @@
   "error": "string"
 }
 ```
+
+# prompt: create an api spec for the suggestTags action only using the code file you are provided
+
+# response:
+
+# API Specification: MusicTagging Concept
+
+**Purpose:** Aid in categorizing musical resources by suggesting relevant tags based on a description.
+
+---
+
+## API Endpoints
+
+### POST /api/MusicTagging/suggestTags
+
+**Description:** Uses an internal LLM to create a set of tags that fit the provided description in a musical context and returns them.
+
+**Requirements:**
+- `description` is not empty
+
+**Effects:**
+- uses an internal llm to create a set of tags that fit the `description` in a musical context and returns this set.
+- Tags already present in `existingTags` are not suggested.
+
+**Request Body:**
+```json
+{
+  "description": "string",
+  "existingTags": ["string"]
+}
+```
+
+**Success Response Body (Action):**
+```json
+{
+  "tags": ["string"]
+}
+```
+
+**Error Response Body:**
+```json
+{
+  "error": "string"
+}
+```

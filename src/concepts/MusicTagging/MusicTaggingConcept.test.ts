@@ -2,32 +2,12 @@ import { assertEquals } from "jsr:@std/assert";
 import { testDb } from "@utils/database.ts";
 import MusicTaggingConcept from "./MusicTaggingConcept.ts";
 import { ID } from "@utils/types.ts";
-import { GeminiLLM } from "@utils/gemini-llm.ts";
 
 // Helper function to get a fresh concept instance for each test
 async function setupConcept() {
   const [db, client] = await testDb();
   const concept = new MusicTaggingConcept(db);
   return { concept, db, client };
-}
-
-/**
- * Load configuration from .env
- */
-function loadLLM(): GeminiLLM {
-  try {
-    const apiKey = Deno.env.get("GEMINI_API_KEY");
-    if (!apiKey) {
-      throw new Error("GEMINI_API_KEY not found in environment variables.");
-    }
-    return new GeminiLLM(apiKey);
-  } catch (error) {
-    console.error(
-      "❌ Error loading .env. Please ensure GEMINI_API_KEY is set.",
-    );
-    console.error("Error details:", (error as Error).message);
-    Deno.exit(1);
-  }
 }
 
 Deno.test("MusicTaggingConcept", async (test) => {
@@ -144,11 +124,10 @@ Deno.test("MusicTaggingConcept", async (test) => {
         );
 
         // 4. add suggestTags call to verify it works in the principle test
-        const llm = loadLLM();
         console.log(`💡 Calling suggestTags for registry ${registryId1}`);
         const suggestResult = await concept.suggestTags({
-          registry: registryId1,
-          llm: llm,
+          description: description1,
+          existingTags: [tag1, tag3],
         });
         if ("error" in suggestResult) {
           console.log(`❌ suggestTags failed: ${suggestResult.error}`);
@@ -160,23 +139,17 @@ Deno.test("MusicTaggingConcept", async (test) => {
           false,
           "suggestTags should succeed",
         );
-
-        // Fetch again because suggestTags should have added tags
-        fetchedRegistry = await concept.registries.findOne({
-          _id: registryId1,
-        });
-        if (fetchedRegistry === null) {
-          throw new Error("Registry should exist after suggestTags");
+        if ("tags" in suggestResult) {
+          suggestResult.tags.forEach(async (tag) => {
+            console.log(
+              `💡 Suggested tag for registry ${registryId1}: "${tag}"`,
+            );
+            await concept.addTag({ registry: registryId1, tag });
+          });
+        } else {
+          console.log(`❌ No tags returned from suggestTags.`);
+          assertEquals(true, false, "Expected tags from suggestTags");
         }
-        console.log("Tags after suggestTags:", fetchedRegistry?.tags);
-        assertEquals(
-          fetchedRegistry.tags.length > 2,
-          true,
-          "There should be at more than 2 tags after suggestTags",
-        );
-        console.log(
-          `✅ Total tags after suggestTags: ${fetchedRegistry.tags.length}`,
-        );
       } else {
         console.log(`❌ registerResource failed: ${registerResult.error}`);
         throw new Error("Initial resource registration failed.");
@@ -279,13 +252,12 @@ Deno.test("MusicTaggingConcept", async (test) => {
       const nonExistentRegistryId = "non_existent_registry" as ID;
 
       // 1. use suggestTags to try add a tag first (expecting 0 tags for "league of legends")
-      const llm = loadLLM();
       console.log(
         `💡 Calling suggestTags for registry ${registryId} (description: "league of legends")`,
       );
       const suggestResult = await concept.suggestTags({
-        registry: registryId,
-        llm: llm,
+        description: "league of legends",
+        existingTags: [],
       });
       if ("error" in suggestResult) {
         console.log(

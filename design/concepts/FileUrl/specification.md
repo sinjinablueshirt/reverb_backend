@@ -24,3 +24,7 @@
     * `deleteFile(file: File, user: User)`
         * **requires**: `file` exists and `user` is its `owner`
         * **effects**: removes `file` from the state and makes it so that its `url` isn't able to access it through the `url`
+
+    * `getViewUrl(gcsObjectName: string): (viewUrl: string)`
+        * **requires** `gcsObjectName` exists in GCS.
+        * **effects** Generates and returns a pre-signed URL that allows viewing/downloading the file from Google Cloud Storage for a limited time.
