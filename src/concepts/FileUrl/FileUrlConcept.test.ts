@@ -169,8 +169,9 @@ Deno.test("FileUrlConcept", async (t) => {
       console.log(
         `Action: confirmUpload({ fileName: '${fileName}', gcsObjectName: '${gcsObjectName}', owner: '${user1}' })`,
       );
+      const title = "Operational Principle Document";
       const confirmResult = await concept.confirmUpload(
-        { fileName, gcsObjectName, owner: user1 },
+        { fileName, title, gcsObjectName, owner: user1 },
       );
 
       if ("error" in confirmResult) {
@@ -325,8 +326,10 @@ Deno.test("FileUrlConcept", async (t) => {
         headers: { "Content-Type": fileData.type },
       });
       if (!uploadResponse.ok) console.warn("Simulated GCS upload 1 failed.");
+      const title = "Duplicate Test Document";
 
       const confirmResult1 = await concept.confirmUpload({
+        title,
         fileName,
         gcsObjectName: gcsObjectName1,
         owner: user1,
@@ -486,9 +489,11 @@ Deno.test("FileUrlConcept", async (t) => {
       if (!uploadResponse.ok) {
         console.warn("Simulated GCS upload for owner_delete.txt failed.");
       }
+      const title = "Owner Delete Test Document";
 
       const confirmResult = await concept.confirmUpload({
         fileName,
+        title,
         gcsObjectName,
         owner: user1,
       });
@@ -612,6 +617,7 @@ Deno.test("FileUrlConcept", async (t) => {
 
         const confResult = await concept.confirmUpload({
           fileName: _fileName,
+          title: `Title for ${_fileName}`,
           gcsObjectName,
           owner: _owner,
         });

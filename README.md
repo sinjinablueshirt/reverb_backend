@@ -1,7 +1,10 @@
 # 6.104 Assignment 4: Implementing Concepts
 
-## Design Changes & Interesting Moments
-[overall design doc](/design/design.md)
+## Design Changes FOR ASSIGNMENT 4B WITH THE FRONT END
+[click here for updates made in the process of assignment 4b](/design/4b_design.md)
+
+## Design Changes & Interesting Moments (ASSIGNMENT 4A ONLY)
+[design doc for assignment 4a](/design/design.md)
 
 ## Concept 1: UserAuthentication
 [design](/design/concepts/UserAuthentication/design.md)\

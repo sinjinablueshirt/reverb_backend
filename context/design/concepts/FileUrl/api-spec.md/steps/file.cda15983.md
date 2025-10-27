@@ -1,3 +1,12 @@
+---
+timestamp: 'Sat Oct 25 2025 19:32:51 GMT-0400 (Eastern Daylight Time)'
+parent: '[[../20251025_193251.400f2e7f.md]]'
+content_id: cda15983e1992a176761dbbde6fc911901c25cff1760827204da13829c71e134
+---
+
+# file: src/concepts/FileUrl/FileUrlConcept.ts
+
+```typescript
 import { Collection, Db } from "npm:mongodb";
 import { Storage } from "npm:@google-cloud/storage";
 import { Empty, ID } from "@utils/types.ts";
@@ -377,3 +386,5 @@ export default class FileUrlConcept {
     return { title: file.title };
   }
 }
+
+```
