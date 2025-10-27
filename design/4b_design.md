@@ -13,3 +13,6 @@ I had to basically rework the entire suggestTags action. Before, it would take i
 
 ## Getting the titles of files
 In the implementation of assignment 4a, I naively believed that I the fileName or gcsObjectName fields could store the user's desired title for their music. However, I realized that these fields are used for other things. The fileName is the actual name of the file that was uploaded and the gcsObjectName is the name of the object in the GCS bucket. There was no ability for a user to title their work. Thus, for assignment 4b, I added a title field to state of fileUrl since it isn't saved otherwise
+
+## Note
+Note that for all the above changes, I made the appropriate changes to the concept spec, implementation, and testing files in a similar flow to what I did in 4a when I first implemented them. The current versions of the concept spec/implementation/tests can be seen in the README
