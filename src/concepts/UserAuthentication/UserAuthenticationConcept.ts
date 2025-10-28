@@ -129,7 +129,7 @@ export default class UserAuthenticationConcept {
   async _getUserById(
     { id }: { id: User },
   ): Promise<{ username: string } | { error: string }> {
-    console.log("Fetching user by ID:", id);
+    // console.log("Fetching user by ID:", id);
     const user = await this.users.findOne({ _id: id });
     if (!user) {
       return { error: "User not found." };

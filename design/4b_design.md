@@ -2,8 +2,7 @@
 
 ## Added Queries
 
-In my 4a submission none of my concepts had queries. So I had to make some for each concept so taht the front end could access important information. Additionally, as I was implementing queries, I noticed that some of my actions/queries initially took in arguments like normal code but had to change so they took in JSON-like objects (and returned JSON objects)
-
+In my 4a submission none of my concepts had queries. So I had to make some for each concept so that the front end could access important information. Additionally, as I was implementing queries, I noticed that some of my actions/queries initially took in arguments like normal code but had to change so they took in JSON-like objects (and returned JSON objects)
 
 ## Changing file handling
 I needed to drastically change the way files work. I realized in 4b that I can't just pass in a file path to the concept since backend cant just acceess the local files. To do this, I changed FileUrl by splitting the uploadfile action into two actions, requestupload and confirmupload. It took A LOT of trial and error working with GCS to get this to work, but I eventually figured out how to create buckets anre quest upload urls to those buckets. Later on, I also realized that I needed to create an action to request a viewing Url every time I want to see the contents of a file, so I created an action to support this.
