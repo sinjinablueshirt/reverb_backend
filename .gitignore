@@ -4,4 +4,7 @@
 ctx
 ctx.exe
 .obsidian/workspace.json
+src/concepts/concepts.ts
+src/concepts/test_concepts.ts
+src/syncs/syncs.ts
 gen-lang-client-0487369979-998d10b7e107.json
