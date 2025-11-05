@@ -1,0 +1,203 @@
+---
+timestamp: 'Sun Nov 02 2025 12:44:01 GMT-0500 (Eastern Standard Time)'
+parent: '[[../20251102_124401.8017e2b6.md]]'
+content_id: 54479b045e5070ea15948da72bc683e14384457f8aaa553f51ae1a51c569b7aa
+---
+
+# API Specification: UserAuthentication Concept
+
+**Purpose:** to identify and authenticate users so that only legitimate users can access their own accounts.
+
+***
+
+## API Endpoints
+
+### POST /api/UserAuthentication/register
+
+**Description:** Creates and saves a new user, returning the identifier of the created user.
+
+**Requirements:**
+
+* A user with the same username doesn't already exist.
+
+**Effects:**
+
+* Creates and saves a new user.
+* Returns the created user's identifier.
+
+**Request Body:**
+
+```json
+{
+  "username": "string",
+  "password": "string"
+}
+```
+
+**Success Response Body (Action):**
+
+```json
+{
+  "user": "string"
+}
+```
+
+**Error Response Body:**
+
+```json
+{
+  "error": "string"
+}
+```
+
+***
+
+### POST /api/UserAuthentication/login
+
+**Description:** Authenticates a user with the provided username and password, returning the user's identifier if successful.
+
+**Requirements:**
+
+* A user exists that has a username and password that matches the passed in username and password.
+
+**Effects:**
+
+* Returns the user that has a username and password that matches the passed in username and password.
+
+**Request Body:**
+
+```json
+{
+  "username": "string",
+  "password": "string"
+}
+```
+
+**Success Response Body (Action):**
+
+```json
+{
+  "user": "string"
+}
+```
+
+**Error Response Body:**
+
+```json
+{
+  "error": "string"
+}
+```
+
+***
+
+### POST /api/UserAuthentication/deleteUser
+
+**Description:** Deletes a user from the system based on their username and password.
+
+**Requirements:**
+
+* A user exists that has a username and password that matches the passed in username and password.
+
+**Effects:**
+
+* Deletes the user that has a username and password that matches the passed in username and password.
+
+**Request Body:**
+
+```json
+{
+  "username": "string",
+  "password": "string"
+}
+```
+
+**Success Response Body (Action):**
+
+```json
+{}
+```
+
+**Error Response Body:**
+
+```json
+{
+  "error": "string"
+}
+```
+
+***
+
+### POST /api/UserAuthentication/changePassword
+
+**Description:** Changes the password for an existing user after verifying their current credentials.
+
+**Requirements:**
+
+* A user exists that has a username and password that matches the passed in username and oldPassword.
+
+**Effects:**
+
+* Changes the user's password to newPassword.
+
+**Request Body:**
+
+```json
+{
+  "username": "string",
+  "oldPassword": "string",
+  "newPassword": "string"
+}
+```
+
+**Success Response Body (Action):**
+
+```json
+{}
+```
+
+**Error Response Body:**
+
+```json
+{
+  "error": "string"
+}
+```
+
+***
+
+### POST /api/UserAuthentication/\_getUserById
+
+**Description:** Retrieves the username for a given user ID.
+
+**Requirements:**
+
+* A user with the given ID must exist.
+
+**Effects:**
+
+* Returns the username of the user with the given ID.
+
+**Request Body:**
+
+```json
+{
+  "id": "string"
+}
+```
+
+**Success Response Body (Query):**
+
+```json
+{
+  "username": "string"
+}
+```
+
+**Error Response Body:**
+
+```json
+{
+  "error": "string"
+}
+```
