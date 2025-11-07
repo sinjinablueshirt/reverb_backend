@@ -1,3 +1,12 @@
+---
+timestamp: 'Thu Nov 06 2025 22:33:49 GMT-0500 (Eastern Standard Time)'
+parent: '[[../20251106_223349.f12941f3.md]]'
+content_id: 5652e04ae41da238b175fd77cef7357f133adb525461caacb4c7518d32b6c8e3
+---
+
+# file: src/concepts/Requesting/passthrough.ts
+
+```typescript
 /**
  * The Requesting concept exposes passthrough routes by default,
  * which allow POSTs to the route:
@@ -37,6 +46,8 @@ export const inclusions: Record<string, string> = {
   "/api/FileUrl/_getFilesByUser": "this is a public query",
   "/api/FileUrl/_getFileById": "this is a public query",
   "/api/FileUrl/_getFileTitleById": "this is a public query",
+  "/api/MusicTagging/suggestTags":
+    "getting recommended tags only requires a description and current tags",
   "/api/MusicTagging/_getRegistriesByTags": "this is a public query",
   "/api/MusicTagging/_getRegistryById": "this is a public query",
   "/api/MusicTagging/_getRegistryByResource": "this is a public query",
@@ -65,7 +76,6 @@ export const exclusions: Array<string> = [
   "/api/UserAuthentication/login",
   "/api/UserAuthentication/deleteUser",
   "/api/UserAuthentication/changePassword",
-  "/api/UserAuthentication/logout",
 
   "/api/FileUrl/requestUpload",
   "/api/FileUrl/confirmUpload",
@@ -76,7 +86,6 @@ export const exclusions: Array<string> = [
   "/api/MusicTagging/addTag",
   "/api/MusicTagging/removeTag",
   "/api/MusicTagging/deleteRegistry",
-  "/api/MusicTagging/suggestTags",
   "/api/MusicTagging/createPrompt",
   "/api/MusicTagging/loadLLM",
 
@@ -84,3 +93,5 @@ export const exclusions: Array<string> = [
   "/api/Sessioning/_getUser",
   "/api/Sessioning/delete",
 ];
+
+```

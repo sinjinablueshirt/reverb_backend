@@ -1,32 +1,10 @@
-[@concept-background](tools/concept-background.md)
+---
+timestamp: 'Thu Nov 06 2025 22:44:43 GMT-0500 (Eastern Standard Time)'
+parent: '[[../20251106_224443.05538d40.md]]'
+content_id: cef442b2bfe4a0146cd991b1147b2326db7b7e4a14010015502a93657380a322
+---
 
-[@sync-background](tools/sync-background.md)
-
-[@api-spec](api-spec.md)
-
-[@passthroughs](../src/concepts/Requesting/passthrough.ts)
-
-[@sample-syncs](../src/syncs/sample.sync.ts)
-
-[@concepts](../src/concepts/concepts.ts)
-
-[@current-syncs](../src/syncs/api.sync.ts)
-
-<!-- # prompt: Given the api spec, create syncs for the routes that are specified by the passthroughs file as being "excluded". You should refer to the concept background and sync background for instructions on how to construct syncs in this manner. DO NOT create any syncs involving LikertSurvey routes, but refer to the sample sync file to see that you need a request and response for each sync. You should note that these excluded routes require things like the user being logged in (i.e. they can only upload something if they are authenticated and have a valid session). You should write syncs accordingly. Use the concepts file for imports. -->
-
-# prompt: something is wrong with the suggestTags sync. it seems like the request times out. Look at the current sync file and return a fixed version of suggestTags syncs
-
-# response:
-
-The timeout issue with the `suggestTags` synchronization is caused by a parameter name mismatch. The `SuggestTagsRequest` sync was expecting a parameter named `currentTags` in the incoming HTTP request, but the API specification and the `MusicTagging.suggestTags` concept action itself use the parameter name `existingTags`.
-
-This mismatch prevents the `when` clause of the `SuggestTagsRequest` sync from ever matching an incoming request. As a result, the `MusicTagging.suggestTags` action is never triggered, and no response is ever sent, leading to the request timeout.
-
-To fix this, the `SuggestTagsRequest` synchronization needs to be updated to use `existingTags` consistently, from destructuring the variables to matching the request pattern and calling the concept action.
-
-Here is the corrected version of the `src/syncs/api.sync.ts` file:
-
-# file: src/syncs/api.sync.ts
+# file: src/syncs/auth.sync.ts
 
 ```typescript
 /**
@@ -180,9 +158,7 @@ export const AddCommentResponseError: Sync = ({ request, error }) => ({
 });
 
 // Remove Comment
-export const RemoveCommentRequest: Sync = (
-  { request, session, user, comment },
-) => ({
+export const RemoveCommentRequest: Sync = ({ request, session, user, comment }) => ({
   when: actions([
     Requesting.request,
     { path: "/Comment/removeComment", session, comment },
@@ -359,9 +335,7 @@ export const MusicRegisterResourceResponseSuccess: Sync = (
   then: actions([Requesting.respond, { request, registry }]),
 });
 
-export const MusicRegisterResourceResponseError: Sync = (
-  { request, error },
-) => ({
+export const MusicRegisterResourceResponseError: Sync = ({ request, error }) => ({
   when: actions(
     [Requesting.request, { path: "/MusicTagging/registerResource" }, {
       request,
@@ -462,116 +436,23 @@ export const DeleteRegistryResponseError: Sync = ({ request, error }) => ({
   then: actions([Requesting.respond, { request, error }]),
 });
 
-export const SuggestTagsRequest: Sync = (
-  { request, session, description, existingTags },
-) => ({
+// -- Sessioning -- //
+
+// Get User from Session (useful for client to verify session)
+export const GetUserFromSessionRequest: Sync = ({ request, session }) => ({
   when: actions([
     Requesting.request,
-    { path: "/MusicTagging/suggestTags", session, description, existingTags },
+    { path: "/Sessioning/_getUser", session },
     { request },
   ]),
-  where: (frames) => frames.query(Sessioning._getUser, { session }, {}),
-  then: actions([MusicTagging.suggestTags, {
-    description,
-    existingTags,
-  }]),
+  then: actions([Sessioning._getUser, { session }]),
 });
 
-export const SuggestTagsResponseSuccess: Sync = (
-  { request, tags },
-) => ({
+export const GetUserFromSessionResponse: Sync = ({ request, user }) => ({
   when: actions(
-    [Requesting.request, { path: "/MusicTagging/suggestTags" }, { request }],
-    [MusicTagging.suggestTags, {}, { tags }],
-  ),
-  then: actions([Requesting.respond, { request, suggestedTags: tags }]),
-});
-
-export const SuggestTagsResponseError: Sync = ({ request, error }) => ({
-  when: actions(
-    [Requesting.request, { path: "/MusicTagging/suggestTags" }, { request }],
-    [MusicTagging.suggestTags, {}, { error }],
-  ),
-  then: actions([Requesting.respond, { request, error }]),
-});
-
-//-- User Registration --//
-export const RegisterRequest: Sync = ({ request, username, password }) => ({
-  when: actions([Requesting.request, {
-    path: "/UserAuthentication/register",
-    username,
-    password,
-  }, { request }]),
-  then: actions([UserAuthentication.register, { username, password }]),
-});
-
-export const RegisterResponseSuccess: Sync = ({ request, user }) => ({
-  when: actions(
-    [Requesting.request, { path: "/UserAuthentication/register" }, { request }],
-    [UserAuthentication.register, {}, { user }],
+    [Requesting.request, { path: "/Sessioning/_getUser" }, { request }],
+    [Sessioning._getUser, {}, { user }],
   ),
   then: actions([Requesting.respond, { request, user }]),
-});
-
-export const RegisterResponseError: Sync = ({ request, error }) => ({
-  when: actions(
-    [Requesting.request, { path: "/UserAuthentication/register" }, { request }],
-    [UserAuthentication.register, {}, { error }],
-  ),
-  then: actions([Requesting.respond, { request, error }]),
-});
-
-//-- User Login & Session Creation --//
-export const LoginRequest: Sync = ({ request, username, password }) => ({
-  when: actions([Requesting.request, {
-    path: "/UserAuthentication/login",
-    username,
-    password,
-  }, {
-    request,
-  }]),
-  then: actions([UserAuthentication.login, { username, password }]),
-});
-
-export const LoginSuccessCreatesSession: Sync = ({ user }) => ({
-  when: actions([UserAuthentication.login, {}, { user }]),
-  then: actions([Sessioning.create, { user }]),
-});
-
-export const LoginResponseSuccess: Sync = ({ request, user, session }) => ({
-  when: actions(
-    [Requesting.request, { path: "/UserAuthentication/login" }, { request }],
-    [UserAuthentication.login, {}, { user }],
-    [Sessioning.create, { user }, { session }],
-  ),
-  then: actions([Requesting.respond, { request, user, session }]),
-});
-
-export const LoginResponseError: Sync = ({ request, error }) => ({
-  when: actions(
-    [Requesting.request, { path: "/UserAuthentication/login" }, { request }],
-    [UserAuthentication.login, {}, { error }],
-  ),
-  then: actions([Requesting.respond, { request, error }]),
-});
-
-//-- User Logout --//
-export const LogoutRequest: Sync = ({ request, session, user }) => ({
-  when: actions([Requesting.request, {
-    path: "/UserAuthentication/logout",
-    session,
-  }, {
-    request,
-  }]),
-  where: (frames) => frames.query(Sessioning._getUser, { session }, { user }),
-  then: actions([Sessioning.delete, { session }]),
-});
-
-export const LogoutResponse: Sync = ({ request }) => ({
-  when: actions(
-    [Requesting.request, { path: "/UserAuthentication/logout" }, { request }],
-    [Sessioning.delete, {}, {}],
-  ),
-  then: actions([Requesting.respond, { request, status: "logged_out" }]),
 });
 ```
