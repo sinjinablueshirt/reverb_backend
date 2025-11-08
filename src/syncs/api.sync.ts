@@ -527,7 +527,7 @@ export const LoginResponseError: Sync = ({ request, error }) => ({
 //-- User Logout --//
 export const LogoutRequest: Sync = ({ request, session, user }) => ({
   when: actions([Requesting.request, {
-    path: "/UserAuthentication/logout",
+    path: "/logout",
     session,
   }, {
     request,
@@ -538,7 +538,7 @@ export const LogoutRequest: Sync = ({ request, session, user }) => ({
 
 export const LogoutResponse: Sync = ({ request }) => ({
   when: actions(
-    [Requesting.request, { path: "/UserAuthentication/logout" }, { request }],
+    [Requesting.request, { path: "/logout" }, { request }],
     [Sessioning.delete, {}, {}],
   ),
   then: actions([Requesting.respond, { request, status: "logged_out" }]),
