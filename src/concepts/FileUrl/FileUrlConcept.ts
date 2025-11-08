@@ -114,7 +114,7 @@ export default class FileUrlConcept {
       });
 
       // EFFECT: Return the generated upload URL and the GCS object name.
-      console.log("returning upload url:", { uploadUrl, gcsObjectName });
+      // console.log("returning upload url:", { uploadUrl, gcsObjectName });
       return { uploadUrl, gcsObjectName };
     } catch (err: any) {
       return {
