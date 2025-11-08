@@ -4,9 +4,16 @@
 [Final Design Doc](/design/final_design.md)\
 [Project Reflection](/design/reflection.md)\
 [Demo Video Recording](https://youtu.be/wYU5LSHD94E)\
-[Video Trace](/design/video_trace.md)
-
-## Everything below is from past assignments
+[Video Trace](/design/video_trace.md)\
+\
+\
+\
+\
+## EVERYTHING BELOW THIS POINT IS FOR PAST ASSIGNMENTS
+\
+\
+\
+\
 
 ### Design Changes FOR ASSIGNMENT 4B
 [click here for updates made in the process of assignment 4b](/design/4b_design.md)

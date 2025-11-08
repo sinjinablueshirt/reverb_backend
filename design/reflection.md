@@ -1,6 +1,3 @@
-2.5-flash-lite better than 2.5-flash for suggestTags
-
-
 # Project Reflection
 
 ## What was hard?
